@@ -2,7 +2,7 @@
 > A curated list of resources for building our Streamlit application
 
 ## Official Streamlit Documentation 📖
-- https://docs.streamlit.io/
+-  [Main Documentation](https://docs.streamlit.io/) - Here
 
 ## Example Projects 💡
 - https://github.com/jesusmlb/Air_Quality_Deployment/tree/main/app_example/streamlit
