@@ -4,6 +4,9 @@
 ## Official Streamlit Documentation 📖
 - https://docs.streamlit.io/
 
+## Example Projects 💡
+- https://github.com/jesusmlb/Air_Quality_Deployment/tree/main/app_example/streamlit
+
 ## Component Libraries 🧩
 - https://streamlit.io/components
 
