@@ -18,3 +18,7 @@
 
 ## Community Resources 🤝
 - [here](https://streamlit.io/community)
+
+## External Youtube resources
+- [Link_1](https://youtu.be/YClmpnpszq8?si=gMfiBBHxnpaSrCrJ)
+- [Link_2](https://youtu.be/HKoOBiAaHGg?si=syGfQKZez3KnX_eE)
