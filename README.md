@@ -1,5 +1,5 @@
 # Mexico City Air Quality Prediction System 🌍
-> Empowering citizens with accurate air quality forecasts and personalized health recommendations
+> Citizens with accurate air quality forecasts and personalized health recommendations
 
 ## Project Overview
 This repository contains the deployment phase of our Mexico City Air Quality Prediction System, focusing on the Streamlit application development. Our goal is to provide accurate 24-hour air quality forecasts while making the information accessible and actionable for all citizens.
