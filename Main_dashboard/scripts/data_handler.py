@@ -36,7 +36,7 @@ STATION_COORDINATES = {
 }
 
 
-def load_data(file_path='C:\\Users\\garla\\PycharmProjects\\Mexico_AQI\\Data\\AQI_dummy_data.xlsx'):
+def load_data(file_path='./Dashboard_data/AQI_dummy_data.xlsx'):
     """Load data from Excel file"""
     try:
         df = pd.read_excel(file_path)

@@ -78,31 +78,33 @@ def main():
                          type="primary" if st.session_state.language == 'es' else "secondary"):
                 st.session_state.language = 'es'
 
-        st.markdown("---")
+        # st.markdown("---")
 
-        # Station selector
+        # Station selector / Selection inside page (discuss with Sai to remove lines)
 
-        st.subheader("📍 " + get_text('select_station', st.session_state.language))
-        stations = ['All Stations'] + get_all_stations()
-        selected = st.selectbox(
-            "",
-            options=stations,
-            index=stations.index(st.session_state.selected_station),
-            format_func=lambda x: get_text(x, st.session_state.language),
-            label_visibility="collapsed"
-        )
+        # st.subheader("📍 " + get_text('select_station', st.session_state.language))
+        # stations = ['All Stations'] + get_all_stations()
+        # selected = st.selectbox(
+        #     "",
+        #     options=stations,
+        #     index=stations.index(st.session_state.selected_station),
+        #     format_func=lambda x: get_text(x, st.session_state.language),
+        #     label_visibility="collapsed"
+        # )
 
-        if selected != st.session_state.selected_station:
-            st.session_state.selected_station = selected
-            st.rerun()
+        # if selected != st.session_state.selected_station:
+        #     st.session_state.selected_station = selected
+        #     st.rerun()
 
         st.markdown("---")
         # Page selector
-        st.subheader("📊 " + get_text('select_page', st.session_state.language))
+        st.subheader(get_text('select_page', st.session_state.language))
         page = st.radio(
             "",
             options=[get_text('page1', st.session_state.language),
-                     get_text('page2', st.session_state.language)],
+                     get_text('page2', st.session_state.language),
+                     get_text('page3', st.session_state.language),
+                     get_text('page4', st.session_state.language)],
             label_visibility="collapsed"
         )
 
@@ -137,9 +139,13 @@ def main():
 
     # Main content
     if page == get_text('page1', st.session_state.language):
-        page_1.show()
-    else:
         page_2.show()
+    elif page == get_text('page2', st.session_state.language):
+        page_1.show()
+    elif page == get_text('page3', st.session_state.language):
+        page_2.new_home()    
+    else:
+        st.markdown("TBD: Health Recommendations page")
 
 
 if __name__ == "__main__":

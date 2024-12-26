@@ -9,12 +9,20 @@ def get_text(key, language):
             'es': 'Seleccionar página'
         },
         'page1': {
-            'en': 'AQI Overview',
-            'es': 'Resumen de AQI'
-        },
-        'page2': {
             'en': 'AQI Heatmap',
             'es': 'Mapa de Calor AQI'
+        },
+        'page2': {
+            'en': 'Forecast',
+            'es': 'Pronostico'
+        },
+        'page3': {
+            'en': 'New home',
+            'es': 'Nuevo Inicio'
+        },
+        'page4': {
+            'en': 'Health Recommendations',
+            'es': 'Recomendaciones de Salud'
         },
         'current_aqi': {
             'en': 'Current Air Quality Index',
