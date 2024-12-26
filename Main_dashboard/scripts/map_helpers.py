@@ -157,7 +157,6 @@ from scripts.data_handler import STATION_COORDINATES
 
 # New ones
 import json
-import shapefile
 from shapely.geometry import shape
 from shapely.wkb import loads
 from shapely.wkt import dumps
