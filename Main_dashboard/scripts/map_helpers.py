@@ -146,6 +146,7 @@
 #
 #     return m
 #
+import os
 import folium
 from folium.plugins import HeatMap
 import pandas as pd
@@ -162,9 +163,10 @@ from shapely.wkb import loads
 from shapely.wkt import dumps
 import branca
 
+# Comment out when actual data is there
+dashboard_data_path = os.path.join('Main_dashboard', 'Dashboard_data', 'limite-de-las-alcaldas.json')
 
-
-with open("./Dashboard_data/limite-de-las-alcaldas.json") as f:
+with open(dashboard_data_path) as f:
 	geo_json_data = json.load(f)
 
 # Parse the GeoJSON to extract features
