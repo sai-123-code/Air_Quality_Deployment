@@ -31,11 +31,30 @@ We are currently focusing on building a user-friendly web interface using Stream
 
 ## 🤝 How to Contribute
 
-1. Fork the repository
+1. Fork the repository ()
 2. Create a new branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
+
+## Installation Steps
+
+### Using `uv` package manager
+(*This is a recommended package manager for maintenance and project management needs in Python.*)
+
+1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/#standalone-installer) in your system and ensure it is usable in your terminal.
+2. From this project directory, type `uv venv` to initialize the virtual environment in the folder (If you do not have the specific Python version as listed in `.python-version` uv will download it for you)
+3. Run `source .venv/bin/activate` as seen in the terminal to activate the virtual environment
+4. Type `uv sync` to install all listed dependencies in the lockfile
+
+**No necessary reading of requirements.txt was done in this guide.**
+
+## Activating the Application (Locally)
+This section details how any newbie Python user can debug or preview the Streamlit application from their local repository.
+
+1. Ensure that you have set-up and are currently accessing a `virtual environment` in your local repo. You may refer to the **Installation Steps** listed above this.
+2. From the Terminal, where the current working directory is the root folder, type `streamlit run Main_dashboard/Main_landing_page_custom.py`. This will initialize the Streamlit application locally.
+3. To close the application fully, you may Press `CTRL+C` from the terminal to close the application.
 
 ### Priority Areas for Contribution
 - Streamlit component development
