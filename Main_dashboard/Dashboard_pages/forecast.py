@@ -11,7 +11,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 from scripts.language_utils import get_text
-from scripts.data_handler import get_current_hour_data
+from scripts.data_handler import get_current_hour_data, get_all_stations
 from scripts.data_handler import STATION_COORDINATES
 
 def create_daily_chart(data, date):
@@ -95,6 +95,28 @@ def create_aqi_header(date, aqi_level, condition):
       </div>
     </div>
   """
+
+def get_24hr_forecast(data):
+  fig, ax = plt.subplots(figsize=(12,4))
+  
+  ax.bar(data['hour'], data['temperature'], 
+        width=1, 
+        align='edge',
+        color='#EFEAD0',
+        edgecolor='#3A3A3A')
+  ax.set_xticks([0, 4, 8, 12, 16, 20, 23])
+  ax.tick_params('both', color='white', labelcolor='white')
+  ax.spines['top'].set_visible(False)
+  ax.spines['right'].set_visible(False)
+  ax.spines['bottom'].set_color('white')
+  ax.spines['left'].set_color('white')
+
+  ax.set_title('24-Hour Forecast', color='white', fontsize=16, pad=15, loc='left', fontweight='bold')
+  plt.subplots_adjust(top=0.85)
+  plt.tight_layout(rect=[0, 0, 1, 0.95])
+
+  return fig
+
 def get_condition_color(condition):
   """Return background color based on condition"""
   color_map = {
@@ -105,6 +127,17 @@ def get_condition_color(condition):
   }
   return color_map.get(condition, '#FFFFFF')
 
+def get_aqi_condition_color(condition):
+  color_map = {
+        'good': '#7CB342',        # Muted green - easier on eyes, good contrast
+        'moderate': '#FDD835',    # Softer yellow - better readability
+        'unhealthy_sensitive': '#FB8C00',  # Muted orange - distinct from yellow/red
+        'unhealthy': '#E53935',   # Softer red - less harsh but still clear warning
+        'very_unhealthy': '#8E24AA',  # Muted purple - distinct from red
+        'hazardous': '#B71C1C'    # Deep red - serious but not harsh
+    }
+  return color_map.get(condition, '#424242')  # Dark gray as default, matches theme
+
 def home():
   """Main function to render the forecast page"""
   # Get language from session state
@@ -112,8 +145,11 @@ def home():
   
   # Set page title with language support
   st.title(get_text('current_forecast', lang))
-  st.write('####')
-  
+
+  station_col, whitespace_1, whitespace_2 = st.columns([1,1,1])
+  with station_col:
+    selected_station = st.selectbox((get_text('station', lang)).capitalize(), get_all_stations())
+
   # Sample data - replace with actual data fetching logic
   dates = [datetime.now() + timedelta(days=i) for i in range(4)]
   temps = [16, 18, 18, 17]
@@ -128,7 +164,8 @@ def home():
   
   # Create sample dataset - replace with actual data
   sample_data = pd.DataFrame({
-      'date': [datetime.combine(d, datetime.min.time()) for d in dates_rep],
+      'date': [d for d in dates_rep],
+      'date_w_timestamp': [datetime.combine(d, datetime.min.time()) for d in dates_rep],
       'hour': hours,
       'pm25': np.random.rand(96),
       'o3': np.random.rand(96),
@@ -140,11 +177,36 @@ def home():
       'precipitation': np.random.rand(96)
   })
   
-  # Create headers and charts for each day
-  for i, (col, date, temp, condition) in enumerate(zip(cols, dates, temps, conditions)):
-      with col:
-          # Display header
-          st.markdown(create_forecast_header(date, temp, condition), 
-                      unsafe_allow_html=True)
-          # Display charts
-          st.pyplot(create_daily_chart(sample_data, date))
+  st.write(f"### Forecast: {sample_data['date'][0].strftime('%B %d, %Y')}")
+  temp_card, aqi_card = st.columns([1, 1])
+  with temp_card:
+    st.markdown(create_forecast_header(datetime.now(), 18, 'moderate'), unsafe_allow_html=True)
+  with aqi_card:
+    st.markdown(create_aqi_header(datetime.now(), 75, 'moderate'), unsafe_allow_html=True)
+  
+  with st.container():
+    st.write(f"""
+      <div class="forecast-hpw-container">
+        
+        <div class="forecast-hpw-column">
+          <span class="hpw-header">Humidity</span>
+          <h3>{"{:.1f}%".format(sample_data['humidity'][0])}</h3>
+        </div>
+             
+        <div class="forecast-hpw-column">
+          <span class="hpw-header">Pressure</span>
+          <h3>{"{:.0f} hPa".format(sample_data['pressure'][0])}</h3>
+        </div>
+             
+        <div class="forecast-hpw-column">
+          <span class="hpw-header">Wind Speed</span>
+          <h3>{"{:.0f} km/h".format(sample_data['wind_speed'][0])}</h3>
+        </div>
+        
+      </div>
+    """, unsafe_allow_html=True)
+  
+  today = pd.Timestamp.now().date()
+  day_fig = get_24hr_forecast(sample_data[sample_data['date'] == today])
+  with st.container():
+    st.pyplot(day_fig)
