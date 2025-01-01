@@ -122,6 +122,10 @@ def get_text(key, language):
             'en': 'Xalostoc',
             'es': 'Xalostoc'
         },
+        'station': {
+            'en': 'Station',
+            'es': 'Estación'
+        },
         'select_station': {
             'en': 'Select Station',
             'es': 'Seleccionar Estación'

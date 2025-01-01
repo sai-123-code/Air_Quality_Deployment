@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from datetime import datetime
 from pathlib import Path
@@ -35,8 +36,8 @@ STATION_COORDINATES = {
     'Xalostoc': {'lat': 19.526111111111, 'lon': -99.0825}
 }
 
-
-def load_data(file_path='./Dashboard_data/AQI_dummy_data.xlsx'):
+dummy_data = os.path.join('Main_dashboard', 'Dashboard_data', 'AQI_dummy_data.xlsx')
+def load_data(file_path=dummy_data):
     """Load data from Excel file"""
     try:
         df = pd.read_excel(file_path)
