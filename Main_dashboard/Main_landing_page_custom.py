@@ -42,11 +42,39 @@ st.markdown("""
         font-size: 16px;
         padding: 10px 0;
     }
+            
+    .forecast-tempaqi-container {
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      border: 1px solid white;
+      border-radius: 5px;
+      margin: 5px;
+    }
+    
+    .forecast-hpw-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 2em; 
+      border: 1px solid white; 
+      border-radius: 5px;
+      margin-block: 1em;
+            
+      background-color: #1F2937;
+    }
+    .forecast-hpw-column {
+      display: flex;
+      flex-direction: column;
+    }
+    .hpw-header {
+      color: #9BA2AE;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # Add Font Awesome support
-st.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"/>', unsafe_allow_html=True)
+st.write('<link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/font-awesome-line-awesome/css/all.min.css"/>', unsafe_allow_html=True)
 
 def initialize_session_state():
     if 'language' not in st.session_state:

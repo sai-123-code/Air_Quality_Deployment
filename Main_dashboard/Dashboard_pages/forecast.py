@@ -71,13 +71,30 @@ def create_ultraviolet_index(data, date):
 def create_forecast_header(date, temp, condition):
   """Create a single forecast header"""
   return f"""
-  <div style='text-align: center; background: {get_condition_color(condition)}; 
-              padding: 10px; border-radius: 5px; margin: 5px;'>
-      <h3>{date.strftime('%a %d')}</h3>
-      <h2>{temp}°C</h2>
+  <div class='forecast-tempaqi-container' style='background: {get_condition_color(condition)};'>
+      <h3 style='margin: 0; padding: 0'>{date.strftime('%a %d')}</h3>
+      <div style='display: flex; flex-direction: column; align-items: flex-start; margin-top: 10px'>
+        <h2 style='margin: 0; padding: 0'>{temp}°C</h2>
+        <sup>Expected</sup>
+      </div>
   </div>
   """
 
+def create_aqi_header(date, aqi_level, condition):
+  """Create a single expected AQI"""
+  return f"""
+    <div class='forecast-tempaqi-container' style='background: {get_aqi_condition_color(condition)};'>
+      <div style='display: flex; justify-content: between'>
+        <h4 style='margin: 0; padding: 0'>Air Quality Index</h4>
+      </div>
+      <div style='display: flex; justify-content: flex-start; align-items: flex-end; margin-top: 10px'>
+        <span>
+          <h2 style='margin: 0; padding: 0'>{aqi_level}</h2>
+          <span>{condition.capitalize()}</span>
+        </span>
+      </div>
+    </div>
+  """
 def get_condition_color(condition):
   """Return background color based on condition"""
   color_map = {
