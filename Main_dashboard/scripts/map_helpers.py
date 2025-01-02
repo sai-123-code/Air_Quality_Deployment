@@ -164,7 +164,7 @@ from shapely.wkt import dumps
 import branca
 
 # Comment out when actual data is there
-dashboard_data_path = os.path.join('Main_dashboard', 'Dashboard_data', 'limite-de-las-alcaldas.json')
+dashboard_data_path = os.path.join('Dashboard_data', 'limite-de-las-alcaldas.json')
 
 with open(dashboard_data_path) as f:
 	geo_json_data = json.load(f)
