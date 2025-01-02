@@ -122,6 +122,10 @@ def get_text(key, language):
             'en': 'Xalostoc',
             'es': 'Xalostoc'
         },
+        'station': {
+            'en': 'Station',
+            'es': 'Estación'
+        },
         'select_station': {
             'en': 'Select Station',
             'es': 'Seleccionar Estación'
@@ -129,6 +133,10 @@ def get_text(key, language):
         'All Stations': {
             'en': 'All Stations',
             'es': 'Todas las Estaciones'
+        },
+        'current_forecast': {
+            'en': 'Air Quality Forecast',
+            'es': 'Pronostico de Calidad del Aire'
         }
     }
     

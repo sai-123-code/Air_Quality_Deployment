@@ -1,5 +1,5 @@
 import streamlit as st
-from Dashboard_pages import page_1, page_2
+from Dashboard_pages import page_1, page_2, forecast
 from scripts.language_utils import get_text
 from scripts.data_handler import get_current_hour_data, get_all_stations
 from datetime import datetime
@@ -42,9 +42,39 @@ st.markdown("""
         font-size: 16px;
         padding: 10px 0;
     }
+            
+    .forecast-tempaqi-container {
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      border: 1px solid white;
+      border-radius: 5px;
+      margin: 5px;
+    }
+    
+    .forecast-hpw-container {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      padding: 2em; 
+      border: 1px solid white; 
+      border-radius: 5px;
+      margin-block: 1em;
+            
+      background-color: #1F2937;
+    }
+    .forecast-hpw-column {
+      display: flex;
+      flex-direction: column;
+    }
+    .hpw-header {
+      color: #9BA2AE;
+    }
     </style>
 """, unsafe_allow_html=True)
 
+# Add Font Awesome support
+st.write('<link rel="stylesheet" href="https://maxst.icons8.com/vue-static/landings/line-awesome/font-awesome-line-awesome/css/all.min.css"/>', unsafe_allow_html=True)
 
 def initialize_session_state():
     if 'language' not in st.session_state:
@@ -104,7 +134,8 @@ def main():
             options=[get_text('page1', st.session_state.language),
                      get_text('page2', st.session_state.language),
                      get_text('page3', st.session_state.language),
-                     get_text('page4', st.session_state.language)],
+                     get_text('page4', st.session_state.language),
+                     ],
             label_visibility="collapsed"
         )
 
@@ -141,9 +172,9 @@ def main():
     if page == get_text('page1', st.session_state.language):
         page_2.show()
     elif page == get_text('page2', st.session_state.language):
-        page_1.show()
+        forecast.home()
     elif page == get_text('page3', st.session_state.language):
-        page_2.new_home()    
+        page_2.new_home()   
     else:
         st.markdown("TBD: Health Recommendations page")
 
