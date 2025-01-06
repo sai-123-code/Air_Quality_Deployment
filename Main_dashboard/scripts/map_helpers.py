@@ -148,6 +148,7 @@
 #
 import os
 import folium
+from pathlib import Path
 from folium.plugins import HeatMap
 import pandas as pd
 import streamlit as st
@@ -164,7 +165,8 @@ from shapely.wkt import dumps
 import branca
 
 # Comment out when actual data is there
-dashboard_data_path = os.path.join('Dashboard_data', 'limite-de-las-alcaldas.json')
+BASE_DIR = Path(__file__).resolve().parent.parent
+dashboard_data_path = BASE_DIR / 'Dashboard_data' / 'limite-de-las-alcaldas.json'
 
 with open(dashboard_data_path) as f:
 	geo_json_data = json.load(f)
