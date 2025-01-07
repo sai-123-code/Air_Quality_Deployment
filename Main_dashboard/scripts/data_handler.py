@@ -110,7 +110,7 @@ def get_all_hours_data():
     
     return df.to_dict('records')
  
-def get_pollutant_metrics(sample_data: pd.DataFrame):
+def get_pollutants(sample_data: pd.DataFrame):
     """Get all possible pollutant metrics to choose from."""
     # NOTE: Update when real-world data is connected
     exclude_cols = ['date', 'date_w_timestamp', 'hour']

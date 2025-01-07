@@ -183,6 +183,10 @@ def get_text(key, language):
             'en': 'Metric',
             'es': 'Métrica de medida'
         },
+        'pollutants': {
+            'en': 'Pollutants',
+            'es': 'Contaminantes'
+        },
         'temperature': {
             'en': 'Temperature',
             'es': 'Temperatura'

@@ -11,7 +11,7 @@ import numpy as np
 from datetime import datetime, timedelta
 
 from scripts.language_utils import get_text
-from scripts.data_handler import get_current_hour_data, get_all_stations, get_pollutant_metrics, get_pollutant_measuremnents
+from scripts.data_handler import get_current_hour_data, get_all_stations, get_pollutants, get_pollutant_measuremnents
 from scripts.data_handler import STATION_COORDINATES
 
 def create_ultraviolet_index(data, date):
@@ -172,11 +172,11 @@ def home():
       </div>
     """, unsafe_allow_html=True)
   
-  metric_select_col, whitespace_3, whitespace_4 = st.columns(3)
-  with metric_select_col:
-    metric_selection = st.selectbox(get_text('metric', lang), get_pollutant_metrics(sample_data), format_func=lambda x: x.upper())
+  pollutant_select_col, whitespace_3, whitespace_4 = st.columns(3)
+  with pollutant_select_col:
+    pollutant_selection = st.selectbox(get_text('pollutants', lang), get_pollutants(sample_data), format_func=lambda x: x.upper())
   
   today = pd.Timestamp.now().date()
-  day_fig = get_24hr_forecast(sample_data[sample_data['date'] == today], metric_selection, lang)
+  day_fig = get_24hr_forecast(sample_data[sample_data['date'] == today], pollutant_selection, lang)
   with st.container():
     st.pyplot(day_fig)
