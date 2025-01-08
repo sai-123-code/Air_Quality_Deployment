@@ -137,6 +137,63 @@ def get_text(key, language):
         'current_forecast': {
             'en': 'Air Quality Forecast',
             'es': 'Pronostico de Calidad del Aire'
+        },
+        'air_quality_index': {
+            'en': 'Air Quality Index',
+            'es': 'Índice de calidad del aire'
+        },
+        ''
+        'humidity': {
+            'en': 'Humidity',
+            'es': 'Humedad'
+        },
+        'pressure': {
+            'en': 'Pressure',
+            'es': 'Presión'
+        },
+        'wind_speed': {
+            'en': 'Wind Speed',
+            'es': 'Velocidad del viento'
+        },
+        'o3': {
+            'en': 'Ozone',
+            'es': 'Ozono'
+        },
+        'no2': {
+            'en': 'Nitrogen Dioxide',
+            'es': 'Dióxido de nitrógeno'
+        },
+        'pm10': {
+            'en': 'PM10',
+            'es': 'PM10'
+        },
+        'pm25': {
+            'en': 'PM2.5',
+            'es': 'PM2.5'
+        },
+        'co': {
+            'en': 'CO',
+            'es': 'CO'
+        },
+        'so2': {
+            'en': 'SO2',
+            'es': 'SO2'
+        },
+        'metric': {
+            'en': 'Metric',
+            'es': 'Métrica de medida'
+        },
+        'pollutants': {
+            'en': 'Pollutants',
+            'es': 'Contaminantes'
+        },
+        'temperature': {
+            'en': 'Temperature',
+            'es': 'Temperatura'
+        },
+        'time_of_day': {
+            'en': 'Time of day',
+            'es': 'Hora del día'
         }
     }
     

@@ -11,64 +11,13 @@ import numpy as np
 from datetime import datetime, timedelta
 
 from scripts.language_utils import get_text
-from scripts.data_handler import get_current_hour_data, get_all_stations
+from scripts.data_handler import get_current_hour_data, get_all_stations, get_pollutants, get_pollutant_measuremnents
 from scripts.data_handler import STATION_COORDINATES
-
-def create_daily_chart(data, date):
-  """Create charts for a single day"""
-  fig = plt.figure(figsize=(3.5, 10))
-  gs = fig.add_gridspec(6, 1, height_ratios=[1, 0.5, 0.5, 0.5, 0.5, 0.5], hspace=0.4)
-
-  # Filter data for this date
-  daily_data = data[data['date'].dt.date == date.date()]
-
-  # 1. PM2.5 and O3
-  ax1 = fig.add_subplot(gs[0])
-  ax1.bar(daily_data['hour'], daily_data['pm25'], color='#FFA07A', label='PM2.5')
-  ax1_twin = ax1.twinx()
-  ax1_twin.bar(daily_data['hour'], daily_data['o3'], color='#90EE90', alpha=0.5, label='O3')
-  ax1.set_xticks([])
-
-  # 2. Wind
-  ax2 = fig.add_subplot(gs[1])
-  wind_speeds = daily_data['wind_speed']
-  wind_directions = daily_data['wind_direction']
-  x = np.arange(len(wind_speeds))
-  ax2.barbs(x, np.zeros_like(x), wind_speeds * np.cos(wind_directions),
-            wind_speeds * np.sin(wind_directions))
-  ax2.set_xticks([])
-
-  # 3. Temperature
-  ax3 = fig.add_subplot(gs[2])
-  ax3.plot(daily_data['hour'], daily_data['temperature'], color='yellow', marker='o')
-  ax3.fill_between(daily_data['hour'], daily_data['temperature'], alpha=0.3, color='yellow')
-  ax3.set_xticks([])
-
-  # 4. Humidity
-  ax4 = fig.add_subplot(gs[3])
-  ax4.plot(daily_data['hour'], daily_data['humidity'], color='blue')
-  ax4.fill_between(daily_data['hour'], daily_data['humidity'], alpha=0.3, color='blue')
-  ax4.set_xticks([])
-
-  # 5. Pressure
-  ax5 = fig.add_subplot(gs[4])
-  ax5.plot(daily_data['hour'], daily_data['pressure'], color='orange')
-  ax5.fill_between(daily_data['hour'], daily_data['pressure'], alpha=0.3, color='orange')
-  ax5.set_xticks([])
-
-  # 6. Precipitation
-  ax6 = fig.add_subplot(gs[5])
-  ax6.bar(daily_data['hour'], daily_data['precipitation'], color='blue', alpha=0.5)
-  ax6.set_xticks(daily_data['hour'])
-  ax6.set_xticklabels(daily_data['hour'], rotation=45)
-
-  plt.tight_layout()
-  return fig
 
 def create_ultraviolet_index(data, date):
   pass
 
-def create_forecast_header(date, temp, condition):
+def create_forecast_header(date, temp, condition, lang):
   """Create a single forecast header"""
   return f"""
   <div class='forecast-tempaqi-container' style='background: {get_condition_color(condition)};'>
@@ -80,8 +29,10 @@ def create_forecast_header(date, temp, condition):
   </div>
   """
 
-def create_aqi_header(date, aqi_level, condition):
+def create_aqi_header(date, aqi_level, condition, lang):
   """Create a single expected AQI"""
+  condition_lang = get_text(condition, lang)
+
   return f"""
     <div class='forecast-tempaqi-container' style='background: {get_aqi_condition_color(condition)};'>
       <div style='display: flex; justify-content: between'>
@@ -90,30 +41,36 @@ def create_aqi_header(date, aqi_level, condition):
       <div style='display: flex; justify-content: flex-start; align-items: flex-end; margin-top: 10px'>
         <span>
           <h2 style='margin: 0; padding: 0'>{aqi_level}</h2>
-          <span>{condition.capitalize()}</span>
+          <span>{condition_lang.capitalize()}</span>
         </span>
       </div>
     </div>
   """
 
-def get_24hr_forecast(data):
+def get_24hr_forecast(data, metric='temperature', lang='en'):
+
+  # Configurations
   fig, ax = plt.subplots(figsize=(12,4))
-  
-  ax.bar(data['hour'], data['temperature'], 
-        width=1, 
-        align='edge',
-        color='#EFEAD0',
-        edgecolor='#3A3A3A')
+  fig.patch.set_facecolor('#1F2937')
+  ax.set_facecolor('#1F2937')
   ax.set_xticks([0, 4, 8, 12, 16, 20, 23])
-  ax.tick_params('both', color='white', labelcolor='white')
+  ax.tick_params('both', colors='white')
   ax.spines['top'].set_visible(False)
   ax.spines['right'].set_visible(False)
   ax.spines['bottom'].set_color('white')
   ax.spines['left'].set_color('white')
-
-  ax.set_title('24-Hour Forecast', color='white', fontsize=16, pad=15, loc='left', fontweight='bold')
+  
+  # Line plot version
+  ax.plot(data['hour'], data[metric], color='#EFEAD0', linewidth=2, marker='o', markersize=6)
+  ax.set_title(f'24-Hour Forecast - {get_text(metric, lang)}', color='white', fontsize=16, pad=15, loc='left', fontweight='bold')
   plt.subplots_adjust(top=0.85)
-  plt.tight_layout(rect=[0, 0, 1, 0.95])
+  # plt.tight_layout(rect=[0, 0, 1, 0.95])
+
+  # Update labels
+  ax.set_xlabel(get_text('time_of_day', lang))
+  ax.xaxis.label.set_color('white')
+  ax.set_ylabel(get_pollutant_measuremnents(metric)) # use function to retrieve appropriate metric
+  ax.yaxis.label.set_color('white')
 
   return fig
 
@@ -146,7 +103,7 @@ def home():
   # Set page title with language support
   st.title(get_text('current_forecast', lang))
 
-  station_col, whitespace_1, whitespace_2 = st.columns([1,1,1])
+  station_col, whitespace_1, day_forecast_col = st.columns([1,1,1])
   with station_col:
     selected_station = st.selectbox((get_text('station', lang)).capitalize(), get_all_stations())
 
@@ -167,46 +124,59 @@ def home():
       'date': [d for d in dates_rep],
       'date_w_timestamp': [datetime.combine(d, datetime.min.time()) for d in dates_rep],
       'hour': hours,
-      'pm25': np.random.rand(96),
-      'o3': np.random.rand(96),
       'wind_speed': np.random.rand(96) * 5,
-      'wind_direction': np.random.rand(96) * 2 * np.pi,
-      'temperature': np.random.rand(96) * 20 + 10,
       'humidity': np.random.rand(96) * 100,
       'pressure': np.random.rand(96) * 50 + 1000,
-      'precipitation': np.random.rand(96)
+      
+      # Pollutants
+      # PM2.5 (μg/m³) - typically 0-500 scale
+      'pm25': np.clip(np.random.normal(50, 30, 96), 0, 500),
+      # PM10 (μg/m³) - typically 0-600 scale
+      'pm10': np.clip(np.random.normal(75, 40, 96), 0, 600),
+      # O3 (ppb) - typically 0-500 scale
+      'o3': np.clip(np.random.normal(40, 20, 96), 0, 500),
+      # NO2 (ppb) - typically 0-200 scale
+      'no2': np.clip(np.random.normal(30, 15, 96), 0, 200),
+      # CO (ppm) - typically 0-50 scale
+      'co': np.clip(np.random.normal(2, 1, 96), 0, 50),
+      # SO2 (ppb) - typically 0-500 scale
+      'so2': np.clip(np.random.normal(20, 10, 96), 0, 500),
   })
   
   st.write(f"### Forecast: {sample_data['date'][0].strftime('%B %d, %Y')}")
   temp_card, aqi_card = st.columns([1, 1])
   with temp_card:
-    st.markdown(create_forecast_header(datetime.now(), 18, 'moderate'), unsafe_allow_html=True)
+    st.markdown(create_forecast_header(datetime.now(), 18, 'moderate', lang), unsafe_allow_html=True)
   with aqi_card:
-    st.markdown(create_aqi_header(datetime.now(), 75, 'moderate'), unsafe_allow_html=True)
+    st.markdown(create_aqi_header(datetime.now(), 75, 'moderate', lang), unsafe_allow_html=True)
   
   with st.container():
     st.write(f"""
       <div class="forecast-hpw-container">
         
         <div class="forecast-hpw-column">
-          <span class="hpw-header">Humidity</span>
+          <span class="hpw-header">{get_text('humidity', lang)}</span>
           <h3>{"{:.1f}%".format(sample_data['humidity'][0])}</h3>
         </div>
              
         <div class="forecast-hpw-column">
-          <span class="hpw-header">Pressure</span>
+          <span class="hpw-header">{get_text('pressure', lang)}</span>
           <h3>{"{:.0f} hPa".format(sample_data['pressure'][0])}</h3>
         </div>
              
         <div class="forecast-hpw-column">
-          <span class="hpw-header">Wind Speed</span>
+          <span class="hpw-header">{get_text('wind_speed', lang)}</span>
           <h3>{"{:.0f} km/h".format(sample_data['wind_speed'][0])}</h3>
         </div>
         
       </div>
     """, unsafe_allow_html=True)
   
+  pollutant_select_col, whitespace_3, whitespace_4 = st.columns(3)
+  with pollutant_select_col:
+    pollutant_selection = st.selectbox(get_text('pollutants', lang), get_pollutants(sample_data), format_func=lambda x: x.upper())
+  
   today = pd.Timestamp.now().date()
-  day_fig = get_24hr_forecast(sample_data[sample_data['date'] == today])
+  day_fig = get_24hr_forecast(sample_data[sample_data['date'] == today], pollutant_selection, lang)
   with st.container():
     st.pyplot(day_fig)

@@ -36,7 +36,8 @@ STATION_COORDINATES = {
     'Xalostoc': {'lat': 19.526111111111, 'lon': -99.0825}
 }
 
-dummy_data = os.path.join('Dashboard_data', 'AQI_dummy_data.xlsx')
+BASE_DIR = Path(__file__).resolve().parent.parent
+dummy_data = BASE_DIR / 'Dashboard_data' / 'AQI_dummy_data.xlsx'
 def load_data(file_path=dummy_data):
     """Load data from Excel file"""
     try:
@@ -109,3 +110,20 @@ def get_all_hours_data():
     
     return df.to_dict('records')
  
+def get_pollutants(sample_data: pd.DataFrame):
+    """Get all possible pollutant metrics to choose from."""
+    # NOTE: Update when real-world data is connected
+    exclude_cols = ['date', 'date_w_timestamp', 'hour']
+    exclude_non_pollutants = ['wind_speed', 'humidity', 'pressure']
+    return list(filter(lambda x: x not in [*exclude_cols, *exclude_non_pollutants], sample_data.columns))
+
+def get_pollutant_measuremnents(pollutant: str):
+    pollutant_map = {
+        'pm25': 'μg/m³',
+        'pm10': 'μg/m³',
+        'o3': 'ppb',
+        'no2': 'ppb',
+        'co': 'ppm',
+        'so2': 'ppb'
+    }
+    return pollutant_map.get(pollutant, 'units')
