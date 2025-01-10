@@ -37,18 +37,6 @@ We are currently focusing on building a user-friendly web interface using Stream
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## Installation Steps
-
-### Using `uv` package manager
-(*This is a recommended package manager for maintenance and project management needs in Python.*)
-
-1. Install [uv](https://docs.astral.sh/uv/getting-started/installation/#standalone-installer) in your system and ensure it is usable in your terminal.
-2. From this project directory's root folder, type `uv venv` to initialize the virtual environment in the folder (If you do not have the specific Python version as listed in `.python-version` uv will download it for you)
-3. Run `source .venv/bin/activate` as seen in the terminal to activate the virtual environment
-4. Type `uv sync` to install all listed dependencies in the lockfile
-
-**No necessary reading of requirements.txt was done in this guide.**
-
 ## Activating the Application (Locally)
 This section details how any newbie Python user can debug or preview the Streamlit application from their local repository.
 
