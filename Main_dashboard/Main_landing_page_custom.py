@@ -1,5 +1,5 @@
 import streamlit as st
-from Dashboard_pages import page_1, page_2, forecast
+from Dashboard_pages import page_1, page_2, forecast, information
 from scripts.language_utils import get_text
 from scripts.data_handler import get_current_hour_data, get_all_stations
 from datetime import datetime
@@ -8,7 +8,7 @@ from datetime import datetime
 st.set_page_config(
     page_title="Mexico AQI Monitor",
     page_icon="🌎",
-    layout="wide",
+    layout="wide"
 )
 
 # Custom CSS for better UI
@@ -129,15 +129,39 @@ def main():
         st.markdown("---")
         # Page selector
         st.subheader(get_text('select_page', st.session_state.language))
-        page = st.radio(
-            "",
-            options=[get_text('page1', st.session_state.language),
-                     get_text('page2', st.session_state.language),
-                     get_text('page3', st.session_state.language),
-                     get_text('page4', st.session_state.language),
-                     ],
-            label_visibility="collapsed"
+        # page = st.radio(
+        #     "",
+        #     options=[get_text('page1', st.session_state.language),
+        #              get_text('page2', st.session_state.language),
+        #              get_text('page3', st.session_state.language),
+        #              get_text('page4', st.session_state.language),
+        #              ],
+        #     label_visibility="collapsed"
+        # )
+
+        # Initialize page index instead of page name
+        if 'page_index' not in st.session_state:
+            st.session_state.page_index = 0
+
+        # Create options tuple
+        page_options = (
+            get_text('page1', st.session_state.language),
+            get_text('main', st.session_state.language),
+            get_text('forecast', st.session_state.language),
+            get_text('information', st.session_state.language)
         )
+
+        # Use numeric index for selection
+        page = st.radio(
+            get_text('select_page', st.session_state.language),
+            page_options,
+            index=st.session_state.page_index
+        )
+
+        # Store the index instead of the page name
+        st.session_state.page_index = page_options.index(page)
+
+
 
         # Information section
         st.markdown("---")
@@ -171,12 +195,12 @@ def main():
     # Main content
     if page == get_text('page1', st.session_state.language):
         page_2.show()
-    elif page == get_text('page2', st.session_state.language):
+    elif page == get_text('forecast', st.session_state.language):
         forecast.home()
-    elif page == get_text('page3', st.session_state.language):
+    elif page == get_text('main', st.session_state.language):
         page_2.new_home()   
     else:
-        st.markdown("TBD: Health Recommendations page")
+        information.information_page()
 
 
 if __name__ == "__main__":

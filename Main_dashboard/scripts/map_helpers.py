@@ -185,22 +185,22 @@ df = pd.DataFrame(data)
 
 # Dictionary with municipality names and random AQI values
 municipalities_aqi = {
-    "Azcapotzalco": {"station": "Ajusco Medio", "aqi": 50},
-    "Coyoacán": {"station": "Ajusco", "aqi": 95},
-    "Cuajimalpa de Morelos": {"station": "Merced", "aqi": 45},
-    "Gustavo A. Madero": {"station": "Hospital General de México", "aqi": 25},
-    "Iztacalco": {"station": "Xalostoc", "aqi": 43},
-    "Iztapalapa": {"station": "Santa Fe", "aqi": 29},
-    "La Magdalena Contreras": {"station": "Tlalnepantla", "aqi": 3},
-    "Milpa Alta": {"station": "Merced", "aqi": 30},
-    "Álvaro Obregón": {"station": "Miguel Hidalgo", "aqi": 20},
-    "Tláhuac": {"station": "UAM Iztapalapa", "aqi": 80},
-    "Tlalpan": {"station": "Ajusco", "aqi": 70},
-    "Xochimilco": {"station": "Xalostoc", "aqi": 100},
-    "Benito Juárez": {"station": "San Agustin", "aqi": 23},
-    "Cuauhtémoc": {"station": "Milpa Alta", "aqi": 38},
-    "Miguel Hidalgo": {"station": "Benito Juarez", "aqi": 21},
-   "Venustiano Carranza": {"station": "Milpa Alta", "aqi": 10},
+    "Azcapotzalco": {"station": "Ajusco Medio", "aqi": 1},
+    "Coyoacán": {"station": "Ajusco", "aqi": 2},
+    "Cuajimalpa de Morelos": {"station": "Merced", "aqi": 1},
+    "Gustavo A. Madero": {"station": "Hospital General de México", "aqi": 0},
+    "Iztacalco": {"station": "Xalostoc", "aqi": 2},
+    "Iztapalapa": {"station": "Santa Fe", "aqi": 0},
+    "La Magdalena Contreras": {"station": "Tlalnepantla", "aqi": 1},
+    "Milpa Alta": {"station": "Merced", "aqi": 3},
+    "Álvaro Obregón": {"station": "Miguel Hidalgo", "aqi": 0},
+    "Tláhuac": {"station": "UAM Iztapalapa", "aqi": 0},
+    "Tlalpan": {"station": "Ajusco", "aqi": 0},
+    "Xochimilco": {"station": "Xalostoc", "aqi": 0},
+    "Benito Juárez": {"station": "San Agustin", "aqi": 0},
+    "Cuauhtémoc": {"station": "Milpa Alta", "aqi": 0},
+    "Miguel Hidalgo": {"station": "Benito Juarez", "aqi": 0},
+   "Venustiano Carranza": {"station": "Milpa Alta", "aqi": 4},
 }
 
 # Now let's merge with the municipalities dictionary. We need to bring 2 columns station and aqi
@@ -208,6 +208,7 @@ df["station"] = df["NOMGEO"].map(lambda x: municipalities_aqi[x]["station"])
 df["aqi"] = df["NOMGEO"].map(lambda x: municipalities_aqi[x]["aqi"])
 
 def wkt_to_geojson(df):
+    
     features = []
     
     for _, row in df.iterrows():
@@ -271,22 +272,25 @@ def wkt_to_geojson(df):
 # Usage:
 geojson_data = wkt_to_geojson(df)
 
+#lang = st.session_state.language
+
 colormap = branca.colormap.LinearColormap(
     vmin=df["aqi"].quantile(0.0),
     vmax=df["aqi"].quantile(1),
     #colors=["red", "orange", "lightblue", "green", "darkgreen"],
-    colors=["darkgreen", "green", "lightblue", "orange", "red"],
-    caption="Air Quality Index of Mexico City",
+    colors=["#00e400", "#ffff00", "#ff7e00", "#ff0000", "#8f3f97"]
+    #caption=f"{get_text('air_and_heath_index', lang)}",
 )
-
 
 def classical_map(data):
     """
     Create a classical map with markers for Mexican AQI stations.
     """
-    m = folium.Map([19.4326, -99.1332], tiles="cartodbpositron", zoom_start=10,
-            min_zoom=2,
-            max_zoom=20)
+    lang = st.session_state.language
+    
+    m = folium.Map([19.3326, -99.1345], tiles="cartodbpositron", zoom_start=10.6,
+            min_zoom=9,
+            max_zoom=13)
 
     popup = folium.GeoJsonPopup(
         fields=["NOMGEO", "aqi"],
@@ -298,7 +302,7 @@ def classical_map(data):
 
     tooltip = folium.GeoJsonTooltip(
         fields=["NOMGEO", "station", "aqi"],
-        aliases=["Municipality:", "Station:", "AQI:"],
+        aliases=[f"{get_text('municipality', lang)}", f"{get_text('station', lang)}", f"{get_text('index', lang)}"],
         localize=True,
         sticky=False,
         labels=True,
@@ -324,7 +328,8 @@ def classical_map(data):
         popup=popup,
     ).add_to(m)
 
-    colormap.add_to(m)
+    #colormap.add_to(m)
+    m
 
     return m
 
@@ -352,12 +357,12 @@ def create_aqi_heatmap(current_data):
     """
     try:
         # Print current_data structure
-        print("Current data:", current_data)
+        #print("Current data:", current_data)
 
         # Create base map even if no data
         m = folium.Map(
             location=[19.4326, -99.1332],
-            zoom_start=10,
+            zoom_start=11,
             min_zoom=2,
             max_zoom=20
         )
@@ -383,9 +388,9 @@ def create_aqi_heatmap(current_data):
             
             if coords:
                 # Print coordinate types
-                print(f"Coordinates for {station_name}:", coords)
-                print("Lat type:", type(coords['lat']))
-                print("Lon type:", type(coords['lon']))
+                #print(f"Coordinates for {station_name}:", coords)
+                #print("Lat type:", type(coords['lat']))
+                #print("Lon type:", type(coords['lon']))
                 
                 df_data.append({
                     'Station': station_name,
@@ -398,7 +403,7 @@ def create_aqi_heatmap(current_data):
             return m
 
         df = pd.DataFrame(df_data)
-        print("DataFrame types:", df.dtypes)
+        #print("DataFrame types:", df.dtypes)
 
         # Add heatmap layer
         heatmap_data = [[row['Lat'], row['Lon'], row['AQI']] for _, row in df.iterrows()]

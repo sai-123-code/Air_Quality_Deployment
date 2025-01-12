@@ -6,7 +6,7 @@
       "properties": {
         "NOMGEO": "Azcapotzalco",
         "station": "Ajusco Medio",
-        "aqi": 50
+        "aqi": 1
       },
       "geometry": {
         "type": "Polygon",
@@ -2053,7 +2053,7 @@
       "properties": {
         "NOMGEO": "Coyoacán",
         "station": "Ajusco",
-        "aqi": 95
+        "aqi": 2
       },
       "geometry": {
         "type": "Polygon",
@@ -5284,7 +5284,7 @@
       "properties": {
         "NOMGEO": "Cuajimalpa de Morelos",
         "station": "Merced",
-        "aqi": 45
+        "aqi": 1
       },
       "geometry": {
         "type": "Polygon",
@@ -10995,7 +10995,7 @@
       "properties": {
         "NOMGEO": "Gustavo A. Madero",
         "station": "Hospital General de México",
-        "aqi": 25
+        "aqi": 0
       },
       "geometry": {
         "type": "Polygon",
@@ -15218,7 +15218,7 @@
       "properties": {
         "NOMGEO": "Iztacalco",
         "station": "Xalostoc",
-        "aqi": 43
+        "aqi": 2
       },
       "geometry": {
         "type": "Polygon",
@@ -18345,7 +18345,7 @@
       "properties": {
         "NOMGEO": "Iztapalapa",
         "station": "Santa Fe",
-        "aqi": 29
+        "aqi": 0
       },
       "geometry": {
         "type": "Polygon",
@@ -24128,7 +24128,7 @@
       "properties": {
         "NOMGEO": "La Magdalena Contreras",
         "station": "Tlalnepantla",
-        "aqi": 3
+        "aqi": 1
       },
       "geometry": {
         "type": "Polygon",
@@ -29647,7 +29647,7 @@
       "properties": {
         "NOMGEO": "Milpa Alta",
         "station": "Merced",
-        "aqi": 30
+        "aqi": 3
       },
       "geometry": {
         "type": "Polygon",
@@ -32142,7 +32142,7 @@
       "properties": {
         "NOMGEO": "Álvaro Obregón",
         "station": "Miguel Hidalgo",
-        "aqi": 20
+        "aqi": 0
       },
       "geometry": {
         "type": "Polygon",
@@ -40369,7 +40369,7 @@
       "properties": {
         "NOMGEO": "Tláhuac",
         "station": "UAM Iztapalapa",
-        "aqi": 80
+        "aqi": 0
       },
       "geometry": {
         "type": "Polygon",
@@ -44516,7 +44516,7 @@
       "properties": {
         "NOMGEO": "Tlalpan",
         "station": "Ajusco",
-        "aqi": 70
+        "aqi": 0
       },
       "geometry": {
         "type": "Polygon",
@@ -52823,7 +52823,7 @@
       "properties": {
         "NOMGEO": "Xochimilco",
         "station": "Xalostoc",
-        "aqi": 100
+        "aqi": 0
       },
       "geometry": {
         "type": "Polygon",
@@ -59066,7 +59066,7 @@
       "properties": {
         "NOMGEO": "Benito Juárez",
         "station": "San Agustin",
-        "aqi": 23
+        "aqi": 0
       },
       "geometry": {
         "type": "Polygon",
@@ -60933,7 +60933,7 @@
       "properties": {
         "NOMGEO": "Cuauhtémoc",
         "station": "Milpa Alta",
-        "aqi": 38
+        "aqi": 0
       },
       "geometry": {
         "type": "Polygon",
@@ -63044,7 +63044,7 @@
       "properties": {
         "NOMGEO": "Miguel Hidalgo",
         "station": "Benito Juarez",
-        "aqi": 21
+        "aqi": 0
       },
       "geometry": {
         "type": "Polygon",
@@ -66703,7 +66703,7 @@
       "properties": {
         "NOMGEO": "Venustiano Carranza",
         "station": "Milpa Alta",
-        "aqi": 10
+        "aqi": 4
       },
       "geometry": {
         "type": "Polygon",

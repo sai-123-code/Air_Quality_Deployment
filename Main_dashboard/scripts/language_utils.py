@@ -12,17 +12,17 @@ def get_text(key, language):
             'en': 'AQI Heatmap',
             'es': 'Mapa de Calor AQI'
         },
-        'page2': {
+        'forecast': {
             'en': 'Forecast',
             'es': 'Pronostico'
         },
-        'page3': {
-            'en': 'New home',
-            'es': 'Nuevo Inicio'
+        'main': {
+            'en': 'home',
+            'es': 'Inicio'
         },
-        'page4': {
-            'en': 'Health Recommendations',
-            'es': 'Recomendaciones de Salud'
+        'information': {
+            'en': 'Information',
+            'es': 'Informción'
         },
         'current_aqi': {
             'en': 'Current Air Quality Index',
@@ -47,27 +47,28 @@ def get_text(key, language):
         # AQI Status translations
         'good': {
             'en': 'Good',
-            'es': 'Bueno'
+            'es': 'Buena'
         },
-        'moderate': {
-            'en': 'Moderate',
-            'es': 'Moderado'
+        'acceptable': {
+            'en': 'Acceptable',
+            'es': 'Aceptable'
         },
-        'unhealthy_sensitive': {
-            'en': 'Unhealthy for Sensitive Groups',
-            'es': 'Poco saludable para grupos sensibles'
+        'bad': {
+            'en': 'Bad',
+            'es': 'Mala'
         },
-        'unhealthy': {
-            'en': 'Unhealthy',
-            'es': 'Poco saludable'
+        'verybad': {
+            'en': 'Very Bad',
+            'es': 'Muy Mala'
         },
-        'very_unhealthy': {
-            'en': 'Very Unhealthy',
-            'es': 'Muy poco saludable'
+        'extremelybad': {
+            'en': 'Extremely Bad',
+            'es': 'Extremadamente Mala'
         },
-        'hazardous': {
-            'en': 'Hazardous',
-            'es': 'Peligroso'
+        'nodata': {
+            'en': 'No data or under maintenance',
+            'es': 'Sin datos o en mantenimiento'
+            
         },
         # Station translations
         'Ajusco Medio': {
@@ -194,7 +195,82 @@ def get_text(key, language):
         'time_of_day': {
             'en': 'Time of day',
             'es': 'Hora del día'
-        }
+        },
+        ### Main page
+        # Title
+        'title_mp': {
+            'en': 'Actual Index of Air and Health Map',
+            'es': 'Mapa del Índice Actual de Aire y Salud'
+        },
+        # messages for population
+        'air_and_heath_index': {
+            'en': 'Actual Air and Health Index:',
+            'es': 'Índice de Aire y Salud Actual:'
+        },
+        'genaral_population': {
+            'en': 'General Population:',
+            'es': 'Población General:'
+        },
+        'sensitive_population': {
+            'en': 'Sensitive Population:',
+            'es': 'Población Sensible:'
+        },
+        'forecast_message': {
+            'en': 'Forecast Air and Health Index of 24 hours:',
+            'es': 'Pronóstico del Índice de Aire y Salud de 24 horas:'
+        },
+        'health_info': {
+            'en': 'Index awareness - Health Information',
+            'es': 'Índice del Aire - Información de salud'
+        },
+        'pollutantst': {
+            'en': 'Other Pollutants',
+            'es': 'Otros Contaminantes'
+        },
+        'pollutantst_text': {
+            'en': 'Particulate Matter',
+            'es': 'Material Particulado'
+        },
+        'second_col_poll': {
+            'en': 'Actual levels',
+            'es': 'Niveles actuales'
+        },
+        'tableop': {
+            'en': 'Table of pollutants',
+            'es': 'Tabla de contaminantes'
+        },
+        'health_more_details': {
+            'en': 'Information about health:',
+            'es': 'Información sobre salud:'
+        },
+        'click_here': {
+            'en': 'Link for more details',
+            'es': 'Enlace para más detalles'
+        },
+        'recommend': {
+            'en': 'Recommendations for:',
+            'es': 'Recomendaciones para:'
+        },
+        'municipality': {
+            'en': 'Municipality',
+            'es': 'Municipio'
+        },
+        'index': {
+            'en': 'Index',
+            'es': 'Índice'
+        }, 
+        'selectzone': {
+            'en': 'Can you select the zone?',
+            'es': '¿Puedes seleccionar la zona?'
+        },
+        'forexample': {
+            'en': 'E.g. Benito Juarez',
+            'es': 'Ej. Benito Juárez'
+        },
+        'mexicocity': {
+            'en': 'Mexico City',
+            'es': 'Ciudad de México'
+        },  
     }
     
     return translations.get(key, {}).get(language, key) 

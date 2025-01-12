@@ -42,7 +42,7 @@ def load_data(file_path=dummy_data):
     """Load data from Excel file"""
     try:
         df = pd.read_excel(file_path)
-        print(df.head())
+        #print(df.head())
         required_columns = [
             'AQI_STATION', 'HOUR_DAY', 'AQI', 'PM_2.5', 'PM_10',
             'NO2', 'SO2', 'CO', 'O3', 'TRAFFIC_CONGESTION_INDEX'
