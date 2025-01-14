@@ -51,7 +51,7 @@ def information_page():
 
     # Style the dataframe
     def color_risk(val):
-        if val == 'Low' or val == 'Goo':
+        if val == 'Low':
             return 'color: #00E400'
         elif val == 'Moderate':
             return 'color: #FFFF00'
@@ -107,7 +107,7 @@ def information_page():
 if __name__ == "__main__":
     st.set_page_config(
         page_title="Information",
-        page_icon="🏥",
+        page_icon="🌎",
         layout="wide"
     )
     information_page()
