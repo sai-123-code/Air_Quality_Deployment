@@ -1,23 +1,23 @@
 def get_text(key, language):
     translations = {
         'nav_title': {
-            'en': 'Mexico AQI Monitor',
-            'es': 'Monitor de AQI de México'
+            'en': 'Mexico City Air Quality Forecast',
+            'es': 'Monitor del Índice Aire y Salud de México'
         },
         'select_page': {
             'en': 'Select Page',
             'es': 'Seleccionar página'
         },
         'page1': {
-            'en': 'AQI Heatmap',
-            'es': 'Mapa de Calor AQI'
+            'en': 'Air and Health Index Heatmap',
+            'es': 'Mapa de Calor Índice Aire y Salud'
         },
         'forecast': {
             'en': 'Forecast',
             'es': 'Pronostico'
         },
         'main': {
-            'en': 'home',
+            'en': 'Home',
             'es': 'Inicio'
         },
         'information': {
@@ -25,24 +25,24 @@ def get_text(key, language):
             'es': 'Informción'
         },
         'current_aqi': {
-            'en': 'Current Air Quality Index',
-            'es': 'Índice de Calidad del Aire Actual'
+            'en': 'Current Air and Health Index',
+            'es': 'Índice Aire y Salud Actual'
         },
         'pollutant_levels': {
             'en': 'Pollutant Levels',
             'es': 'Niveles de Contaminantes'
         },
         'station_aqi': {
-            'en': 'Station AQI Levels',
-            'es': 'Niveles de AQI por Estación'
+            'en': 'Station Air and Health Index',
+            'es': 'Niveles del Índice Aire y Salud por Estación'
         },
         'refresh_map': {
             'en': 'Refresh Map',
             'es': 'Actualizar Mapa'
         },
         'aqi_heatmap': {
-            'en': 'AQI Heatmap of Mexico Monitoring Stations',
-            'es': 'Mapa de Calor AQI de Estaciones de Monitoreo'
+            'en': 'Air and Health Index Heatmap of Mexico Monitoring Stations',
+            'es': 'Mapa de Calor Índice Aire y Salud de Estaciones de Monitoreo'
         },
         # AQI Status translations
         'good': {
@@ -199,12 +199,12 @@ def get_text(key, language):
         ### Main page
         # Title
         'title_mp': {
-            'en': 'Actual Index of Air and Health Map',
+            'en': 'Current Index of Air and Health Map',
             'es': 'Mapa del Índice Actual de Aire y Salud'
         },
         # messages for population
         'air_and_heath_index': {
-            'en': 'Actual Air and Health Index:',
+            'en': 'Current Air and Health Index:',
             'es': 'Índice de Aire y Salud Actual:'
         },
         'genaral_population': {
@@ -220,8 +220,8 @@ def get_text(key, language):
             'es': 'Pronóstico del Índice de Aire y Salud de 24 horas:'
         },
         'health_info': {
-            'en': 'Index awareness - Health Information',
-            'es': 'Índice del Aire - Información de salud'
+            'en': 'Air and Health Index - Risk Associated',
+            'es': 'Índice de Aire y Salud - Riesgo Asociado'
         },
         'pollutantst': {
             'en': 'Other Pollutants',
@@ -232,7 +232,7 @@ def get_text(key, language):
             'es': 'Material Particulado'
         },
         'second_col_poll': {
-            'en': 'Actual levels',
+            'en': 'Current levels',
             'es': 'Niveles actuales'
         },
         'tableop': {
@@ -240,8 +240,8 @@ def get_text(key, language):
             'es': 'Tabla de contaminantes'
         },
         'health_more_details': {
-            'en': 'Information about health:',
-            'es': 'Información sobre salud:'
+            'en': 'Recommendations for the protection of your health:',
+            'es': 'Recomendaciones para la protección de tu salud:'
         },
         'click_here': {
             'en': 'Link for more details',

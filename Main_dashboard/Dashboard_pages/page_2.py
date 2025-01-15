@@ -22,10 +22,24 @@ locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Use "es_MX.UTF-8" for Mexico-
 
 # Example variables
 #city_name = f"{get_text('city', lang)}"  # City name
-current_date = datetime.now().strftime("%A %d de %B de %Y")  # Format the date in Spanish
-formatted_date = current_date.capitalize()  # Capitalize the first letter for a cleaner look
-current_time = datetime.now().strftime("%H:%M")  # Current time
+# current_date = datetime.now().strftime("%A %d de %B de %Y")  # Format the date in Spanish
+# formatted_date = current_date.capitalize()  # Capitalize the first letter for a cleaner look
+# current_time = datetime.now().strftime("%H:%M")  # Current time
 temperature = int(data["TMP_MER"][-1:].values[0])  # Replace with dynamic temperature value
+
+# Function to get formatted date and time in a specific language
+def get_date_time(lang):
+    if lang == "en":
+        locale.setlocale(locale.LC_TIME, "en_US.UTF-8")  # Set locale to English
+    elif lang == "es":
+        locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Set locale to Spanish
+    else:
+        raise ValueError("Unsupported language. Please choose 'English' or 'Spanish'.")
+
+    current_date = datetime.now().strftime("%A %d de %B de %Y")
+    formatted_date = current_date.capitalize()
+    current_time = datetime.now().strftime("%H:%M")
+    return formatted_date, current_time
 
 # Let's create a function to pick the color for the index
 def get_color(aqi):
@@ -312,6 +326,7 @@ def new_home():
             unsafe_allow_html=True
         )
     with col2:
+        formatted_date, current_time = get_date_time(lang)
         # Custom CSS for bordered container
         option = st.selectbox(
             f"{get_text('selectzone', lang)}",
@@ -323,15 +338,14 @@ def new_home():
         )
         st.markdown(
                 f"""
-                <br>
-                📅 {formatted_date}
+                
+                📅 {formatted_date} &nbsp;&nbsp;&nbsp;&nbsp;
                 🕒 {current_time} &nbsp;&nbsp;&nbsp;&nbsp; 🌡️ {temperature} 
                 """,
                 unsafe_allow_html=True
             )
         st.markdown(
                 f"""
-                <br>
                 <div line-height: 0.8;">
                 <h4>{get_text("health_info", lang)}</h4>
                 </div>
@@ -377,14 +391,17 @@ def new_home():
                 </style>
                 """, unsafe_allow_html=True)
 
+            app_path = 'http://localhost:8501'
+            info_page_file_path = 'Dashboard_pages/information.py'
+            fore_page_file_path = 'Dashboard_pages/forecast.py'
+            info_page = info_page_file_path.split('/')[1][0:-3]
+            fore_page = fore_page_file_path.split('/')[1][0:-3]
             # Content inside the bordered box
             st.markdown(
                 f"""
                 <div class="bordered-box" style="font-size: 18px; line-height: 1.2; color: black;">
                 <strong>{get_text("air_and_heath_index", lang)}</strong> 
                 <span style="display: inline-block; padding: 5px 10px; border-radius: 20px; background-color: {get_color(0)}; color: black;">{get_index(0, lang)}</span>
-                <br><br>
-                <strong>{get_text('recommend', lang)}</strong>
                 <br><br>
                 <strong>{get_text('sensitive_population', lang)}</strong> {air_message(4, "sensiblep", lang)}
                 <br><br>
@@ -394,10 +411,10 @@ def new_home():
                 <span style="display: inline-block; padding: 5px 10px; border-radius: 20px; background-color: {get_color(0)}; color: black;">{get_index(0, lang)}</span>
                 -
                 <span style="display: inline-block; padding: 5px 10px; border-radius: 20px; background-color: {get_color(1)}; color: black;">{get_index(1, lang)}</span>
-                (<a href="#" style="color: black; text-decoration: underline;">{get_text("click_here", lang)}</a>)
+                (<a href="{app_path}/{fore_page}" style="color: black; text-decoration: underline;">{get_text("click_here", lang)}</a>)
                 <br><br>
                 {get_text("health_more_details", lang)}
-                (<a href="#" style="color: black; text-decoration: underline;">{get_text("click_here", lang)}</a>)
+                (<a href="{app_path}/{info_page}" style="color: black; text-decoration: underline;">{get_text("click_here", lang)}</a>)
                 </div>
 
                 """,
