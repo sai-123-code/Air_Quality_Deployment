@@ -9,13 +9,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from datetime import datetime, timedelta
-
+from pathlib import Path
 from scripts.language_utils import get_text
 from scripts.data_handler import get_current_hour_data, get_all_stations, get_pollutants, get_pollutant_measuremnents
 from scripts.data_handler import STATION_COORDINATES
 
-def create_ultraviolet_index(data, date):
-  pass
+BASE_DIR = Path(__file__).resolve().parent.parent
+merged_data_csv = BASE_DIR / 'Dashboard_data' / 'mer_imputed_merged_data.csv'
+data = pd.read_csv(merged_data_csv)
 
 def create_forecast_header(date, temp, condition, lang):
   """Create a single forecast header"""
