@@ -5,6 +5,7 @@ import numpy as np
 from datetime import datetime
 import locale
 import pandas as pd
+from pathlib import Path
 from streamlit_folium import folium_static, st_folium
 from streamlit.components.v1 import html
 from scripts.map_helpers import create_aqi_heatmap, classical_map, geojson_data
@@ -14,7 +15,9 @@ from scripts.data_handler import STATION_COORDINATES
 
 
 # Load the data
-data = pd.read_csv('./Dashboard_data/mer_imputed_merged_data.xlsx - Sheet1.csv')
+BASE_DIR = Path(__file__).resolve().parent.parent
+merged_data_xlsx = BASE_DIR / 'Dashboard_data' / 'mer_imputed_merged_data.csv'
+data = pd.read_csv(merged_data_xlsx)
 
 
 # Set locale to Spanish (replace 'es_MX' with your system's Spanish locale if needed)
