@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 # AQI station coordinates
@@ -127,3 +127,53 @@ def get_pollutant_measuremnents(pollutant: str):
         'so2': 'ppb'
     }
     return pollutant_map.get(pollutant, 'units')
+
+def round_to_nearest_hour(dt: datetime):
+	return dt.replace(minute=0, second=0, microsecond=0) + timedelta(hours=dt.minute // 30)
+
+def get_wind_dir(degrees: int) -> dict:
+  if degrees == 0:
+      return {
+        'direction': 'N',
+        'latex': 'narrow'
+			}
+  if degrees == 90:
+      return {
+        'direction': 'E',
+        'latex': 'earrow'
+			}
+  if degrees == 180:
+      return {
+        'direction': 'S',
+        'latex': 'sarrow'
+			}
+  if degrees == 270:
+      return {
+        'direction': 'W',
+        'latex': 'warrow'
+			}
+  
+	# for ranges
+  if degrees > 0 and degrees < 90:
+      return {
+        'direction': f"{degrees}°NE",
+        'latex': 'nearrow'
+			}
+  if degrees > 90 and degrees < 180:
+      adjusted_angle = 180 - degrees
+      return {
+        'direction': f"{adjusted_angle}°SE",
+        'latex': 'searrow'
+			}
+  if degrees > 180 and degrees < 270:
+      adjusted_angle = 270 - degrees
+      return {
+        'direction': f"{adjusted_angle}°SW",
+        'latex': 'swarrow'
+			}
+  if degrees > 270 and degrees < 360:
+      adjusted_angle = 360 - degrees
+      return {
+        'direction': f"{adjusted_angle}°NW",
+        'latex': 'nwarrow'
+			}
