@@ -2,17 +2,19 @@
 '''
   This is the forecast component of the application.
 '''
-
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import altair as alt
 from datetime import datetime, timedelta
+from babel.dates import format_date, format_time
 from pathlib import Path
 from scripts.language_utils import get_text
-from scripts.data_handler import get_current_hour_data, get_all_stations, get_pollutants, get_pollutant_measuremnents
+from scripts.data_handler import get_current_hour_data, get_all_stations, get_pollutants, get_pollutant_measuremnents, round_to_nearest_hour, get_wind_dir
 from scripts.data_handler import STATION_COORDINATES
+from scripts.components.tags import tagger
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 merged_data_csv = BASE_DIR / 'Dashboard_data' / 'mer_imputed_merged_data.csv'
@@ -21,8 +23,8 @@ data = pd.read_csv(merged_data_csv)
 def create_forecast_header(date, temp, condition, lang):
   """Create a single forecast header"""
   return f"""
-  <div class='forecast-tempaqi-container' style='background: {get_condition_color(condition)};'>
-      <h3 style='margin: 0; padding: 0'>{date.strftime('%a %d')}</h3>
+  <div class='forecast-temp-container' style='background: black;'>
+      <h3 style='margin: 0; padding: 0'>{get_text('temperature', lang)}</h3>
       <div style='display: flex; flex-direction: column; align-items: flex-start; margin-top: 10px'>
         <h2 style='margin: 0; padding: 0'>{temp}°C</h2>
         <sup>Expected</sup>
@@ -33,73 +35,116 @@ def create_forecast_header(date, temp, condition, lang):
 def create_aqi_header(date, aqi_level, condition, lang):
   """Create a single expected AQI"""
   condition_lang = get_text(condition, lang)
+  condition_name = condition_lang.replace('_', ' ').title()
+  # condition_name = re.sub(r'_\d+', '', condition_lang)
 
   return f"""
-    <div class='forecast-tempaqi-container' style='background: {get_aqi_condition_color(condition)};'>
+    <div class='forecast-aqi-container' style='{get_aqi_condition_color(condition)}'>
       <div style='display: flex; justify-content: between'>
-        <h4 style='margin: 0; padding: 0'>Air Quality Index</h4>
+        <h4 style='margin: 0; padding: 0'>{get_text('air_quality_index', lang)}</h4>
       </div>
       <div style='display: flex; justify-content: flex-start; align-items: flex-end; margin-top: 10px'>
         <span>
           <h2 style='margin: 0; padding: 0'>{aqi_level}</h2>
-          <span>{condition_lang.capitalize()}</span>
+          <span>{condition_name}</span>
         </span>
       </div>
     </div>
   """
 
 def get_24hr_forecast(data, metric='temperature', lang='en'):
-
-  # Configurations
-  fig, ax = plt.subplots(figsize=(12,4))
-  fig.patch.set_facecolor('#1F2937')
-  ax.set_facecolor('#1F2937')
-  ax.set_xticks([0, 4, 8, 12, 16, 20, 23])
-  ax.tick_params('both', colors='white')
-  ax.spines['top'].set_visible(False)
-  ax.spines['right'].set_visible(False)
-  ax.spines['bottom'].set_color('white')
-  ax.spines['left'].set_color('white')
+   # Get the current time rounded to nearest hour
+  current_time = round_to_nearest_hour(datetime.now())
   
-  # Line plot version
-  ax.plot(data['hour'], data[metric], color='#EFEAD0', linewidth=2, marker='o', markersize=6)
-  ax.set_title(f'24-Hour Forecast - {get_text(metric, lang)}', color='white', fontsize=16, pad=15, loc='left', fontweight='bold')
-  plt.subplots_adjust(top=0.85)
-  # plt.tight_layout(rect=[0, 0, 1, 0.95])
+  # Create a list of 24 hours starting from the current hour
+  hours = [(current_time + timedelta(hours=i)).strftime('%H:00') for i in range(24)]
+  data = data.copy()
+  data['formatted_time'] = data.apply(
+        lambda row: (datetime.combine(row['date'], datetime(1, 1, 1, row['hour']).time())).strftime('%H:00'),
+        axis=1
+    )
 
-  # Update labels
-  ax.set_xlabel(get_text('time_of_day', lang))
-  ax.xaxis.label.set_color('white')
-  ax.set_ylabel(get_pollutant_measuremnents(metric)) # use function to retrieve appropriate metric
-  ax.yaxis.label.set_color('white')
+  # Filter data for next 24 hours
+  today_data = data[data['date'] == pd.Timestamp.now().date()]
+  tomorrow_data = data[data['date'] == (pd.Timestamp.now() + pd.Timedelta(days=1)).date()]
+  
+  # Combine today and tomorrow's data based on current hour
+  current_hour = current_time.hour
+  forecast_data = pd.concat([
+      today_data[today_data['hour'] >= current_hour],
+      tomorrow_data[tomorrow_data['hour'] < current_hour]
+  ]).reset_index(drop=True)
+  
+  # Ensure we have exactly 24 hours of data
+  forecast_data = forecast_data.head(24)
+  forecast_data['hour_index'] = range(len(forecast_data))
 
-  return fig
+  chart = alt.Chart(forecast_data).mark_line(
+        color='#2563EB',
+        point=alt.MarkConfig(
+            filled=True,
+            size=120
+        )
+    ).encode(
+        x=alt.X('formatted_time:O',
+            sort=None,
+            axis=alt.Axis(
+                values=forecast_data['formatted_time'],
+                title=get_text('time_of_day', lang),
+                titleColor='black',
+                labelColor='black',
+                labelAngle=-45,  # Angle labels for better readability
+            ),
+        ),
+        y=alt.Y(f'{metric}:Q',
+            axis=alt.Axis(
+                title=get_pollutant_measuremnents(metric),
+                titleColor='black',
+                labelColor='black'
+            )
+        )
+    ).properties(
+        width=800,
+        height=500,
+        title=alt.TitleParams(
+            text=f'24-Hour Forecast - {get_text(metric, lang)}',
+            anchor='start',
+            fontSize=16,
+            fontWeight='bold',
+            color='black',
+            offset=15
+        )
+    )
 
-def get_condition_color(condition):
-  """Return background color based on condition"""
-  color_map = {
-      'good': '#90EE90',
-      'moderate': '#FFA500',
-      'poor': '#FF4500',
-      'very_poor': '#FF0000'
-  }
-  return color_map.get(condition, '#FFFFFF')
+    # Configure the theme
+  chart = chart.configure_view(
+      strokeWidth=0  # Removes the frame
+  ).configure_axis(
+      domainColor='black',
+      domain=True,
+      grid=False
+  ).configure_title(
+      align='left'
+  )
+
+  return chart
 
 def get_aqi_condition_color(condition):
   color_map = {
-        'good': '#7CB342',        # Muted green - easier on eyes, good contrast
-        'moderate': '#FDD835',    # Softer yellow - better readability
-        'unhealthy_sensitive': '#FB8C00',  # Muted orange - distinct from yellow/red
-        'unhealthy': '#E53935',   # Softer red - less harsh but still clear warning
-        'very_unhealthy': '#8E24AA',  # Muted purple - distinct from red
-        'hazardous': '#B71C1C'    # Deep red - serious but not harsh
-    }
-  return color_map.get(condition, '#424242')  # Dark gray as default, matches theme
+    'good': 'background: #7CB342; color: black', # Muted green
+    'acceptable': 'background: #FDD835; color: black', # Softer yellow
+    'bad': 'background: #e68200; color: black', # Softer red
+    'very_bad': 'background: #8E24AA; color: white', # Muted purple
+    'extremely_bad': 'background: #B71C1; color: white' # Deep red
+  }
+  return color_map.get(condition, 'background: #424242; color: white')  # Dark gray as default, matches theme
 
 def home():
   """Main function to render the forecast page"""
   # Get language from session state
   lang = st.session_state.language
+  nearest_hour = round_to_nearest_hour(datetime.now())
+  end_hour = nearest_hour + timedelta(hours=23)
   
   # Set page title with language support
   st.title(get_text('current_forecast', lang))
@@ -144,31 +189,35 @@ def home():
       'so2': np.clip(np.random.normal(20, 10, 96), 0, 500),
   })
   
-  st.write(f"### Forecast: {sample_data['date'][0].strftime('%B %d, %Y')}")
-  temp_card, aqi_card = st.columns([1, 1])
-  with temp_card:
-    st.markdown(create_forecast_header(datetime.now(), 18, 'moderate', lang), unsafe_allow_html=True)
-  with aqi_card:
-    st.markdown(create_aqi_header(datetime.now(), 75, 'moderate', lang), unsafe_allow_html=True)
+  time_span = f"({format_time(nearest_hour, 'h:mm a' ,locale=lang)} to {format_time(end_hour, 'h:mm a', locale=lang)}, next day)"
   
   with st.container():
+    st.markdown(create_aqi_header(datetime.now(), 5, 'bad', lang), unsafe_allow_html=True)
+  wind_dir = get_wind_dir(int(data['WDR_MER'][0]))
+
+  with st.container():
     st.write(f"""
-      <div class="forecast-hpw-container">
+      <div class="forecast-thw-container">
         
-        <div class="forecast-hpw-column">
-          <span class="hpw-header">{get_text('humidity', lang)}</span>
-          <h3>{"{:.1f}%".format(sample_data['humidity'][0])}</h3>
+        <div class="forecast-thw-column">
+          <span class="thw-header">{get_text('temperature', lang)}</span>
+          <h3>{"{:.0f}°C".format(data['TMP_MER'][0])}</h3>
         </div>
              
-        <div class="forecast-hpw-column">
-          <span class="hpw-header">{get_text('pressure', lang)}</span>
-          <h3>{"{:.0f} hPa".format(sample_data['pressure'][0])}</h3>
+        <div class="forecast-thw-column">
+          <span class="thw-header">{get_text('relative_humidity', lang)}</span>
+          <h3>{"{:.0f}%".format(data['RH_MER'][0])}</h3>
         </div>
              
-        <div class="forecast-hpw-column">
-          <span class="hpw-header">{get_text('wind_speed', lang)}</span>
-          <h3>{"{:.0f} km/h".format(sample_data['wind_speed'][0])}</h3>
+        <div class="forecast-thw-column">
+          <span class="thw-header">{get_text('wind_speed', lang)}</span>
+          <h3>{"{:.0f} km/h".format(data['WSP_MER'][0])}</h3>
         </div>
+
+        <div class="forecast-thw-column">
+          <span class="thw-header">{get_text('wind_direction', lang)}</span>
+          <h3>{wind_dir['direction']}</h3>
+        </div>     
         
       </div>
     """, unsafe_allow_html=True)
@@ -178,6 +227,8 @@ def home():
     pollutant_selection = st.selectbox(get_text('pollutants', lang), get_pollutants(sample_data), format_func=lambda x: x.upper())
   
   today = pd.Timestamp.now().date()
-  day_fig = get_24hr_forecast(sample_data[sample_data['date'] == today], pollutant_selection, lang)
+  day_fig = get_24hr_forecast(sample_data, pollutant_selection, lang)
   with st.container():
-    st.pyplot(day_fig)
+    st.altair_chart(day_fig, use_container_width=True)
+
+  st.write('*The forecast data listed above is approximately 85% accurate based on multiple tests.*')
