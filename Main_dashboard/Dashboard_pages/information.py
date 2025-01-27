@@ -2,9 +2,50 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime, time
 
+from scripts.language_utils import get_text
+from scripts.data_handler import get_current_hour_data, get_all_stations
+
+# Style the dataframe
+def color_risk(val):
+    if val == 'Low':
+        return 'color: #00E400'
+    elif val == 'Moderate':
+        return 'color: #FFFF00'
+    elif val == 'High':
+        return 'color: #FF7E00'
+    elif val == 'Very High':
+        return 'color: #FF0000'
+    else:
+        return 'color: #8F3F97'
+
+# Style the dataframe
+def color_air_quality(val):
+    if val == 'Good':
+        return 'color: #00E400'
+    elif val == 'Acceptable':
+        return 'color: #FFFF00'
+    elif val == 'Bad':
+        return 'color: #FF7E00'
+    elif val == 'Very bad':
+        return 'color: #FF0000'
+    else:
+        return 'color: #8F3F97'
+
 def information_page():
+    lang = st.session_state.language
+
+    # Get the selected station from the sidebar
+    selected_station = st.session_state.selected_station
+
+    # Get current data
+    current_data = get_current_hour_data(selected_station)
+
+    if not current_data:
+        st.error("No data available")
+        return
+
     # Page title and description
-    st.title("Information")
+    st.title(get_text('information', lang))
     
     # Create two columns for best/worst time cards
     col1, col2 = st.columns(2)
@@ -23,16 +64,12 @@ def information_page():
     col1, col2 = st.columns(2)
     
     with col1:
-        option_time = st.selectbox("Select time period",
-    ("6:00 AM - 9:00 AM", "9:00 AM - 12:00 AM", "12:00 PM - 3:00 PM", "3:00 PM - 6:00 PM", "6:00 PM - 9:00 PM", "9:00 PM - 12:00 AM", "12:00 AM - 3:00 AM", "3:00 AM - 6:00 AM"),
-    )
-        st.write("You selected:", option_time)
+        option_time = st.selectbox(get_text('select_time', lang), ("6:00 AM - 9:00 AM", "9:00 AM - 12:00 AM", "12:00 PM - 3:00 PM", "3:00 PM - 6:00 PM", "6:00 PM - 9:00 PM", "9:00 PM - 12:00 AM", "12:00 AM - 3:00 AM", "3:00 AM - 6:00 AM"))
+        st.write(get_text('selected', lang), option_time)
     
     with col2:
-        option_group = st.selectbox("Select group",
-    ("General population", "Children under 12 years old and pregnant people", "People with cardiovascular or respiratory diseases and those over 60 years of age"),
-    )
-        st.write("You selected:", option_group)
+        option_group = st.selectbox(get_text('select_group', lang), get_text('genaral_population', lang), get_text('children_and_pregnant', lang), get_text('people_cardiovascular', lang))
+        st.write(get_text('selected', lang), option_group)
     
     # Create the main recommendations table
     data = {
@@ -48,32 +85,6 @@ def information_page():
     }
     
     df = pd.DataFrame(data)
-
-    # Style the dataframe
-    def color_risk(val):
-        if val == 'Low':
-            return 'color: #00E400'
-        elif val == 'Moderate':
-            return 'color: #FFFF00'
-        elif val == 'High':
-            return 'color: #FF7E00'
-        elif val == 'Very High':
-            return 'color: #FF0000'
-        else:
-            return 'color: #8F3F97'
-
-    # Style the dataframe
-    def color_air_quality(val):
-        if val == 'Good':
-            return 'color: #00E400'
-        elif val == 'Acceptable':
-            return 'color: #FFFF00'
-        elif val == 'Bad':
-            return 'color: #FF7E00'
-        elif val == 'Very bad':
-            return 'color: #FF0000'
-        else:
-            return 'color: #8F3F97'
 
     # Apply styling
     styled_df = df.style.applymap(color_risk, subset=['Risk Level']).applymap(color_air_quality, subset=['Air Quality'])
@@ -98,10 +109,7 @@ def information_page():
     
     # Add explanatory notes
     st.markdown("""
-    ### Notes
-    - Information is based on a 24-hour forecast for the Air and Health Index
-    - The Air and Health Index and associated messages are only for information purposes to warn the population in a city or locality at a given time.
-    - Please consider personal health conditions and stay updated with local authorities and health providers.
+    Data is sourced from the monitoring stations in Mexico City and the application is built following the [guidelines from the local authorities](https://dof.gob.mx/nota_detalle.php?codigo=5715154&fecha=25/01/2024#gsc.tab=0). The 24-hour forecast for the Air and Health Index is based on a machine learning model which has 85% accuracy. The Air and Health Index and associated messages are only for information purposes to warn the population. Please consider personal health conditions and stay up-to-date with local authorities and health providers.
     """)
 
 if __name__ == "__main__":
