@@ -8,27 +8,75 @@ import pandas as pd
 from pathlib import Path
 from streamlit_folium import folium_static, st_folium
 from streamlit.components.v1 import html
-from scripts.map_helpers import create_aqi_heatmap, classical_map, geojson_data
+from scripts.map_helpers import classical_map, geojson_data, stations_data, forecast_data
 from scripts.language_utils import get_text
 from scripts.data_handler import get_current_hour_data, load_data
 from scripts.data_handler import STATION_COORDINATES
 
+# Get current data of stations and forecast of the stations
+data = stations_data
+forecast = forecast_data
 
-# Load the data
-BASE_DIR = Path(__file__).resolve().parent.parent
-merged_data_xlsx = BASE_DIR / 'Dashboard_data' / 'mer_imputed_merged_data.csv'
-data = pd.read_csv(merged_data_xlsx)
+
+def get_highest_aqi(df, station=None, forecast=False):
+    # Ensure datetime is in proper format
+    df['datetime'] = pd.to_datetime(df['datetime'])
+
+    # Check station
+    if station is None and forecast==False:
+        # Get the last row for each station based on datetime
+        last_rows = df.sort_values('datetime').groupby('station').last().reset_index()
+
+        # Find the station with the highest AirQualityIndex
+        highest_aqi_row = last_rows.loc[last_rows['AirQualityIndex'].idxmax()]
+
+        # Extract the station name and AQI value
+        #highest_station = highest_aqi_row['station']
+        highest_aqi = highest_aqi_row['AirQualityIndex']
+
+        return highest_aqi
+
+    # Check station
+    if station is None and forecast:
+        # Let's get the data from that station
+        lowest_fore = df.loc[df["AirQualityIndex"].idxmin()]
+        max_fore = df.loc[df["AirQualityIndex"].idxmax()]
+
+        highest_aqi_fore = max_fore['AirQualityIndex']
+        lowest_aqi_fore = lowest_fore['AirQualityIndex']
+
+        low_max = [lowest_aqi_fore, highest_aqi_fore]
+
+        return low_max
+    
+    elif station in list(df["station"].values) and forecast == False:
+        # Let's get the data from that station
+        filter_station = df[df["station"] == station].iloc[-1:, -2].values[0]
+
+        return filter_station
+    
+    elif station in list(df["station"].values) and forecast:
+        # Let's get the data from that station
+        lowest_fore = df.loc[df[df["station"] == station]["AirQualityIndex"].idxmin()]
+        max_fore = df.loc[df[df["station"] == station]["AirQualityIndex"].idxmax()]
+
+        highest_aqi_fore = max_fore['AirQualityIndex']
+        lowest_aqi_fore = lowest_fore['AirQualityIndex']
+
+        low_max = [lowest_aqi_fore, highest_aqi_fore]
+
+        return low_max
+    
+    elif station not in df.columns:
+        "No data for selected station"
+        return 6
+    
+
 
 
 # Set locale to Spanish (replace 'es_MX' with your system's Spanish locale if needed)
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Use "es_MX.UTF-8" for Mexico-specific locale
-
-# Example variables
-#city_name = f"{get_text('city', lang)}"  # City name
-# current_date = datetime.now().strftime("%A %d de %B de %Y")  # Format the date in Spanish
-# formatted_date = current_date.capitalize()  # Capitalize the first letter for a cleaner look
-# current_time = datetime.now().strftime("%H:%M")  # Current time
-temperature = int(data["TMP_MER"][-1:].values[0])  # Replace with dynamic temperature value
+temperature = int(data["TMP"][-1:].values[0])  # Replace with dynamic temperature value
 
 # Function to get formatted date and time in a specific language
 def get_date_time(lang):
@@ -46,40 +94,46 @@ def get_date_time(lang):
 
 # Let's create a function to pick the color for the index
 def get_color(aqi):
-    if aqi == 0:
+    if aqi == 1:
         return "#00e400"
-    elif aqi == 1:
-        return "#ffff00"
     elif aqi == 2:
-        return "#ff7e00"
+        return "#ffff00"
     elif aqi == 3:
+        return "#ff7e00"
+    elif aqi == 4:
         return "#ff0000"
-    else:
+    elif aqi == 5:
         return "#8f3f97"
+    else:
+        return "#C0C0C0"
 
 
 def get_index(ind, lang):
     status = {
         
-        0: {
+        1: {
             'en': 'Good',
             'es': 'Buena'
         },
-        1: {
+        2: {
             'en': 'Acceptable',
             'es': 'Aceptable'
         },
-        2: {
+        3: {
             'en': 'Bad',
             'es': 'Mala'
         },
-        3: {
+        4: {
             'en': 'Very Bad',
             'es': 'Muy Mala'
         },
-        4: {
+        5: {
             'en': 'Extremely Bad',
             'es': 'Extremadamente Mala'
+        },
+        6: {
+            'en': 'No data',
+            'es': 'Sin Datos'
         }
         }
     
@@ -98,7 +152,7 @@ def air_message(index: int, population_type: str, lang: str) -> str:
         str: The message corresponding to the color and population type.
     """
     air_quality_data = {
-        0: {
+        1: {
             "es": {  # Spanish
                 "generalp": "El riesgo en salud es mínimo o nulo.",
                 "sensiblep": "El riesgo en salud es mínimo o nulo."
@@ -108,7 +162,7 @@ def air_message(index: int, population_type: str, lang: str) -> str:
                 "sensiblep": "The health risk is minimal or nonexistent."
             }
         },
-        1: {
+        2: {
             "es": {  # Spanish
                 "generalp": "El riesgo en salud es mínimo.",
                 "sensiblep": ("Personas que son sensibles al ozono (O3) o material particulado "
@@ -122,7 +176,7 @@ def air_message(index: int, population_type: str, lang: str) -> str:
                             "irritation and respiratory symptoms such as cough, airway irritation, sputum, difficulty breathing, or wheezing.")
             }
         },
-        2: {
+        3: {
             "es": {  # Spanish
                 "generalp": "Es poco probable que se vea afectada.",
                 "sensiblep": ("Incremento en el riesgo de tener síntomas respiratorios y/o disminución "
@@ -133,7 +187,7 @@ def air_message(index: int, population_type: str, lang: str) -> str:
                 "sensiblep": ("Increased risk of experiencing respiratory symptoms and/or reduced lung function.")
             }
         },
-        3: {
+        4: {
             "es": {  # Spanish
                 "generalp": "Se puede presentar daños a la salud.",
                 "sensiblep": ("Pueden experimentar un agravamiento de asma, enfermedad pulmonar obstructiva crónica "
@@ -146,7 +200,7 @@ def air_message(index: int, population_type: str, lang: str) -> str:
                             "and an increased likelihood of premature death in people with chronic obstructive pulmonary and heart disease.")
             }
         },
-        4: {
+        5: {
             "es": {  # Spanish
                 "generalp": "Es más probable que cualquier persona se vea afectada por efectos graves a la salud.",
                 "sensiblep": "Es más probable que cualquier persona se vea afectada por efectos graves a la salud."
@@ -155,31 +209,46 @@ def air_message(index: int, population_type: str, lang: str) -> str:
                 "generalp": "It is more likely that anyone will be affected by severe health effects.",
                 "sensiblep": "It is more likely that anyone will be affected by severe health effects."
             }
+        },
+        6: {
+            "es": {  # Spanish
+                "generalp": "Sin Datos",
+                "sensiblep": "Sin Datos"
+            },
+            "en": {  # English
+                "generalp": "No Data",
+                "sensiblep": "No Data"
+            }
         }
     }  
     # Return the message
     return air_quality_data[index][lang][population_type]
 
 
-def calculate_weighted_average(df, pollutant, adjustment_factor=1):
+def calculate_weighted_average(df, pollutant, adjustment_factor=1, station=None):
     """
     Calculate weighted average concentrations for different pollutants.
-    """
+    """ 
     ADJUSTMENT_FACTORS = {
-        'PM25_MER': 0.694,
-        'PM10_MER': 0.714
+        'PM25': 0.694,
+        'PM10': 0.714
     }
     
+    if station != None:
+        df = df[df["station"] == station]
+    else:
+        return 0
+    
     # Handle non-PM/CO cases early
-    if pollutant not in ['PM25_MER', 'PM10_MER', 'CO_MER']:
+    if pollutant not in ['PM25', 'PM10', 'CO']:
         return round(np.mean(df[pollutant][-3:].values), 3)
     
     # Get appropriate window size and data
-    window_size = 8 if pollutant == 'CO_MER' else 12
+    window_size = 8 if pollutant == 'CO' else 12
     concentrations = df[pollutant][-window_size:].values
     
     # Handle CO separately
-    if pollutant == 'CO_MER':
+    if pollutant == 'CO':
         if len(concentrations) < 8 or np.isnan(concentrations).sum() > len(concentrations) * 0.25:
             return "No info"
         return round(np.mean(concentrations), 3)
@@ -203,27 +272,29 @@ def calculate_weighted_average(df, pollutant, adjustment_factor=1):
         return "No info"
     
     # Calculate PM average
-    Cmax = np.nanmax(concentrations)
-    Cmin = np.nanmin(concentrations)
-    w = max(0.5, 1 - ((Cmax - Cmin) / Cmax))
-    
-    powers = np.arange(len(concentrations)-1, -1, -1)
-    weights = w ** powers
-    
-    weighted_sum = np.sum(concentrations * weights)
-    weight_sum = np.sum(weights)
-    
+    try:
+        Cmax = np.nanmax(concentrations)
+        Cmin = np.nanmin(concentrations)
+        w = max(0.5, 1 - ((Cmax - Cmin) / Cmax))
+        powers = np.arange(len(concentrations)-1, -1, -1)
+        weights = w ** powers
+        
+        weighted_sum = np.sum(concentrations * weights)
+        weight_sum = np.sum(weights)
+    except ValueError:
+        return 0
+
     return int((weighted_sum / weight_sum) * ADJUSTMENT_FACTORS.get(pollutant, 1))
 
 
 # Define pollutant thresholds as a constant dictionary
 POLLUTANT_THRESHOLDS = {
-    'CO_MER': [5.00, 9.00, 12.00, 16.00],
-    'PM25_MER': [45.00, 60.00, 132.00, 213.00],
-    'PM10_MER': [15.00, 33.00, 79.00, 130.00],
-    'SO2_MER': [0.0035, 0.0075, 0.185, 0.304],
-    'O3_MER': [0.0058, 0.0090, 0.135, 0.175],
-    'NO2_MER': [0.0053, 0.0106, 0.160, 0.213]
+    'CO': [5.00, 9.00, 12.00, 16.00],
+    'PM25': [45.00, 60.00, 132.00, 213.00],
+    'PM10': [15.00, 33.00, 79.00, 130.00],
+    'SO2': [0.0035, 0.0075, 0.185, 0.304],
+    'O3': [0.0058, 0.0090, 0.135, 0.175],
+    'NO2': [0.0053, 0.0106, 0.160, 0.213]
 }
 
 # Define categories as a constant list
@@ -256,10 +327,7 @@ def new_home():
     
     lang = st.session_state.language
 
-    pollutants = ['PM25_MER', 'PM10_MER', 'SO2_MER', 'O3_MER', 'NO2_MER', 'CO_MER']
-    pollutant_values = {pollutant: calculate_weighted_average(data, pollutant) for pollutant in pollutants}
-
-    df = load_data()
+    data = stations_data
 
     # Store the initial value of widgets in session state
     if "visibility" not in st.session_state:
@@ -333,7 +401,7 @@ def new_home():
         # Custom CSS for bordered container
         option = st.selectbox(
             f"{get_text('selectzone', lang)}",
-            list(set(feature["properties"]["station"] for feature in geojson_data["features"])),
+            sorted(list(data["station"].unique())),  # Sort the list of stations alphabetically
             label_visibility=st.session_state.visibility,
             index=None,
             placeholder=f"{get_text('forexample', lang)}",
@@ -376,244 +444,184 @@ def new_home():
             st_folium(m, width=800, height=800)
 
     with col2:
+        
+        data = stations_data
+        
+        pollutants = ['PM25', 'PM10', 'SO2', 'O3', 'NO2', 'CO']
+        pollutant_values = {pollutant: calculate_weighted_average(data, pollutant,station=selected_zone) for pollutant in pollutants}
+            
 
         # Get the markdown for the table and recommendations
-        def get_markdown(df):
-            st.markdown("""
-                <style>
-                .bordered-box {
-                border: 1px solid #000000;
-                border-radius: 20px;
-                padding: 10px;
-                margin-top: 0px;
-                background-color: #ffffff;
-                }
-                .bordered-box h4 {
-                margin-top: 0;
-                }
-                </style>
-                """, unsafe_allow_html=True)
 
-            app_path = 'http://localhost:8501'
-            info_page_file_path = 'Dashboard_pages/information.py'
-            fore_page_file_path = 'Dashboard_pages/forecast.py'
-            info_page = info_page_file_path.split('/')[1][0:-3]
-            fore_page = fore_page_file_path.split('/')[1][0:-3]
-            # Content inside the bordered box
-            st.markdown(
-                f"""
-                <div class="bordered-box" style="font-size: 18px; line-height: 1.2; color: black;">
-                <strong>{get_text("air_and_heath_index", lang)}</strong> 
-                <span style="display: inline-block; padding: 5px 10px; border-radius: 20px; background-color: {get_color(0)}; color: black;">{get_index(0, lang)}</span>
-                <br><br>
-                <strong>{get_text('sensitive_population', lang)}</strong> {air_message(4, "sensiblep", lang)}
-                <br><br>
-                <strong>{get_text('genaral_population', lang)}</strong> {air_message(4, "generalp", lang)}
-                <br><br><br>
-                <strong>{get_text('forecast_message', lang)}</strong>
-                <span style="display: inline-block; padding: 5px 10px; border-radius: 20px; background-color: {get_color(0)}; color: black;">{get_index(0, lang)}</span>
-                -
-                <span style="display: inline-block; padding: 5px 10px; border-radius: 20px; background-color: {get_color(1)}; color: black;">{get_index(1, lang)}</span>
-                (<a href="{app_path}/{fore_page}" style="color: black; text-decoration: underline;">{get_text("click_here", lang)}</a>)
-                <br><br>
-                {get_text("health_more_details", lang)}
-                (<a href="{app_path}/{info_page}" style="color: black; text-decoration: underline;">{get_text("click_here", lang)}</a>)
-                </div>
+        st.markdown("""
+            <style>
+            .bordered-box {
+            border: 1px solid #000000;
+            border-radius: 20px;
+            padding: 10px;
+            margin-top: 0px;
+            background-color: #ffffff;
+            }
+            .bordered-box h4 {
+            margin-top: 0;
+            }
+            </style>
+            """, unsafe_allow_html=True)
 
-                """,
-                unsafe_allow_html=True,
-            )
-            
-            # Custom CSS for the table
-            #### Need to include the weighted average of the 12h and the average of 24h
-            st.markdown(
-                f"""
-                <style>
-                    /* Container and general layout styles */
+        app_path = 'http://localhost:8501'
+        info_page_file_path = 'Dashboard_pages/information.py'
+        fore_page_file_path = 'Dashboard_pages/forecast.py'
+        info_page = info_page_file_path.split('/')[1][0:-3]
+        fore_page = fore_page_file_path.split('/')[1][0:-3]
+        
+        select_index = get_highest_aqi(data, selected_zone)
+        forecast_index = get_highest_aqi(forecast, selected_zone, forecast=True)
+
+        # Content inside the bordered box
+        st.markdown(
+            f"""
+            <div class="bordered-box" style="font-size: 18px; line-height: 1.2; color: black;">
+            <strong>{get_text("air_and_heath_index", lang)}</strong> 
+            <span style="display: inline-block; padding: 5px 10px; border-radius: 20px; background-color: {get_color(select_index)}; color: black;">{get_index(select_index, lang)}</span>
+            <br><br>
+            <strong>{get_text('sensitive_population', lang)}</strong> {air_message(select_index, "sensiblep", lang)}
+            <br><br>
+            <strong>{get_text('genaral_population', lang)}</strong> {air_message(select_index, "generalp", lang)}
+            <br><br><br>
+            <strong>{get_text('forecast_message', lang)}</strong>
+            <span style="display: inline-block; padding: 5px 10px; border-radius: 20px; background-color: {get_color(forecast_index[0])}; color: black;">{get_index(forecast_index[0], lang)}</span> 
+            -
+            <span style="display: inline-block; padding: 5px 10px; border-radius: 20px; background-color: {get_color(forecast_index[1])}; color: black;">{get_index(forecast_index[1], lang)}</span>
+            (<a href="{app_path}/{fore_page}" style="color: black; text-decoration: underline;">{get_text("click_here", lang)}</a>)
+            <br><br>
+            {get_text("health_more_details", lang)}
+            (<a href="{app_path}/{info_page}" style="color: black; text-decoration: underline;">{get_text("click_here", lang)}</a>)
+            </div>
+
+            """,
+            unsafe_allow_html=True,
+        )
+        
+        # Custom CSS for the table
+        #### Need to include the weighted average of the 12h and the average of 24h
+        st.markdown(
+            f"""
+            <style>
+                /* Container and general layout styles */
+                .unique-legend-container {{
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    flex-wrap: wrap; /* Enable wrapping on smaller screens */
+                    padding: 10px 0;
+                    max-width: 100%;
+                    box-sizing: border-box; /* Prevent overflow */
+                }}
+                .unique-legend-container .legend-item {{
+                    display: flex;
+                    align-items: center;
+                    margin-right: 25px;
+                    margin-bottom: 10px; /* Add spacing for wrapping rows */
+                    flex: 1 1 30%; /* Allow items to shrink and wrap */
+                }}
+                .unique-legend-container .legend-circle {{
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    margin-right: 10px;
+                }}
+                
+                /* Table styles */
+                .pollutant-table {{
+                    width: 100%;
+                    border-collapse: collapse;
+                    background-color: white;
+                    color: black;
+                    font-size: 14px;
+                }}
+                .pollutant-table th, .pollutant-table td {{
+                    border: 1px solid black;
+                    padding: 5px;
+                    text-align: center;
+                }}
+                .pollutant-table th {{
+                    font-weight: bold;
+                    background-color: #f0f0f0; /* Light gray header background */
+                }}
+                .pollutant-table td span {{
+                    font-weight: bold;
+                }}
+                .dark-green {{ color: #006400; }}
+                .yellow {{ color: #FFD700; }}
+                .red {{ color: #FF4500; }}
+                .purple {{ color: #A020F0; }}
+                .orange {{ color: #FFA500; }}
+
+                /* Responsiveness: Adjust styles for smaller screens */
+                @media (max-width: 768px) {{
                     .unique-legend-container {{
-                        display: flex;
-                        align-items: center;
-                        justify-content: space-between;
-                        flex-wrap: wrap; /* Enable wrapping on smaller screens */
-                        padding: 10px 0;
-                        max-width: 100%;
-                        box-sizing: border-box; /* Prevent overflow */
+                        justify-content: center; /* Center-align items */
                     }}
                     .unique-legend-container .legend-item {{
-                        display: flex;
-                        align-items: center;
-                        margin-right: 25px;
-                        margin-bottom: 10px; /* Add spacing for wrapping rows */
-                        flex: 1 1 30%; /* Allow items to shrink and wrap */
+                        flex: 1 1 45%; /* Adjust item width for smaller screens */
                     }}
-                    .unique-legend-container .legend-circle {{
-                        width: 20px;
-                        height: 20px;
-                        border-radius: 50%;
-                        margin-right: 10px;
-                    }}
-                    
-                    /* Table styles */
                     .pollutant-table {{
-                        width: 100%;
-                        border-collapse: collapse;
-                        background-color: white;
-                        color: black;
-                        font-size: 14px;
+                        font-size: 12px; /* Reduce font size for tables */
                     }}
-                    .pollutant-table th, .pollutant-table td {{
-                        border: 1px solid black;
-                        padding: 5px;
-                        text-align: center;
+                }}
+                @media (max-width: 480px) {{
+                    .unique-legend-container .legend-item {{
+                        flex: 1 1 100%; /* Stack items vertically */
+                        justify-content: center;
                     }}
-                    .pollutant-table th {{
-                        font-weight: bold;
-                        background-color: #f0f0f0; /* Light gray header background */
+                    .pollutant-table {{
+                        font-size: 10px; /* Further reduce font size */
                     }}
-                    .pollutant-table td span {{
-                        font-weight: bold;
-                    }}
-                    .dark-green {{ color: #006400; }}
-                    .yellow {{ color: #FFD700; }}
-                    .red {{ color: #FF4500; }}
-                    .purple {{ color: #A020F0; }}
-                    .orange {{ color: #FFA500; }}
-
-                    /* Responsiveness: Adjust styles for smaller screens */
-                    @media (max-width: 768px) {{
-                        .unique-legend-container {{
-                            justify-content: center; /* Center-align items */
-                        }}
-                        .unique-legend-container .legend-item {{
-                            flex: 1 1 45%; /* Adjust item width for smaller screens */
-                        }}
-                        .pollutant-table {{
-                            font-size: 12px; /* Reduce font size for tables */
-                        }}
-                    }}
-                    @media (max-width: 480px) {{
-                        .unique-legend-container .legend-item {{
-                            flex: 1 1 100%; /* Stack items vertically */
-                            justify-content: center;
-                        }}
-                        .pollutant-table {{
-                            font-size: 10px; /* Further reduce font size */
-                        }}
-                    }}
-                </style>
-                """,
-                unsafe_allow_html=True,
-            )
-            
-            # Table Content
-            # Add the rest of your markdown and tables
-            st.markdown(
-                f"""
-                <br>
-                <div>
-                    <h4>{get_text("tableop", lang)}</h4>
-                </div>
-                <br>
-                <table class="pollutant-table">
-                    <tr>
-                        <th>{get_text("pollutantst_text", lang)} (µg/m³)</th>
-                        <th>{get_text("second_col_poll", lang)}</th>
-                    </tr>
-                    <tr>
-                        <td>PM10</td>
-                        <td><span class="dark-green">{pollutant_values["PM10_MER"]}</span> µg/m³</td>
-                    </tr>
-                    <tr>
-                        <td>PM2.5</td>
-                        <td><span class="yellow">{pollutant_values["PM25_MER"]}</span> µg/m³</td>
-                    </tr>
-                    <tr>
-                        <td>O₃</td>
-                        <td><span class="red">{pollutant_values["O3_MER"]}</span> ppm</td>
-                    </tr>
-                    <tr>
-                        <td>NO₂</td>
-                        <td><span class="purple">{pollutant_values["NO2_MER"]}</span> ppm</td>
-                    </tr>
-                    <tr>
-                        <td>SO₂</td>
-                        <td><span class="orange">{pollutant_values["SO2_MER"]}</span> ppm</td>
-                    </tr>
-                    <tr>
-                        <td>CO</td>
-                        <td><span class="red">{pollutant_values["CO_MER"]}</span> ppm</td>
-                    </tr>
-                </table>
-                """,
-                unsafe_allow_html=True,
-            )
-
-        ##### Need to add as well the AQI from each station, with the string of good, ok, bad...
+                }}
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
         
-        
-        # pm10, pm2.5: actual, mean 12 h and 24 h
-        def get_pms(df):
-            # pm10
-            pm_10_12 = int(df.iloc[:11, 4].mean())
-            pm_10_24 = int(df.iloc[:23, 4].mean())
-
-            # pm2.5
-            pm_25_12 = int(df.iloc[:11, 3].mean())
-            pm_25_24 = int(df.iloc[:23, 3].mean())
-
-            # CO
-            CO8h = round(df.iloc[:7, 7].mean(), 2)
-            # Max of 8 hours weighted average of the day
-            COmx8h = round(np.argmax([df.iloc[:8, 3]]), 2)
-
-            # NO2
-            NO2 = round(df.iloc[:, 5].mean(), 3)
-
-            # O3
-            O3 = round(df.iloc[:, 8].mean(), 3)
-
-            # SO2
-            SO2 = round(df.iloc[:, 6].mean(), 3)
-
-
-            pms_list = list([pm_10_12, pm_10_24,
-                            pm_25_12, pm_25_24,
-                            CO8h, COmx8h,
-                            NO2,
-                            O3,
-                            SO2])
-
-            return pms_list
-        
-        pm_list = get_pms(df)
-
-        if selected_zone != None:
-            df = df[df["AQI_STATION"] == selected_zone]
-            pm_list = get_pms(df)
-            get_markdown(df)
-        else:
-            get_markdown(df)
-
-
-### ====================================================================================================
-# Sai's code    
-
-def show():
-    lang = st.session_state.language
-
-    st.title(get_text('aqi_heatmap', lang))
-
-    # Always get data for all stations for the map
-    all_stations_data = get_current_hour_data('All Stations')
-
-    # Create and display map with all stations data
-    m = create_aqi_heatmap(all_stations_data)
-    folium_static(m, width=1000, height=600)
-
-    # Add refresh button
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        if st.button(get_text('refresh_map', lang)):
-            # Get new data for all stations and update session state
-            st.session_state.current_data = get_current_hour_data('All Stations')
-            st.rerun()
+        # Table Content
+        # Add the rest of your markdown and tables
+        st.markdown(
+            f"""
+            <br>
+            <div>
+                <h4>{get_text("tableop", lang)}</h4>
+            </div>
+            <br>
+            <table class="pollutant-table">
+                <tr>
+                    <th>{get_text("pollutantst_text", lang)} (µg/m³)</th>
+                    <th>{get_text("second_col_poll", lang)}</th>
+                </tr>
+                <tr>
+                    <td>PM10</td>
+                    <td><span class="dark-green">{pollutant_values["PM10"]}</span> µg/m³</td>
+                </tr>
+                <tr>
+                    <td>PM2.5</td>
+                    <td><span class="yellow">{pollutant_values["PM25"]}</span> µg/m³</td>
+                </tr>
+                <tr>
+                    <td>O₃</td>
+                    <td><span class="red">{pollutant_values["O3"]}</span> ppm</td>
+                </tr>
+                <tr>
+                    <td>NO₂</td>
+                    <td><span class="purple">{pollutant_values["NO2"]}</span> ppm</td>
+                </tr>
+                <tr>
+                    <td>SO₂</td>
+                    <td><span class="orange">{pollutant_values["SO2"]}</span> ppm</td>
+                </tr>
+                <tr>
+                    <td>CO</td>
+                    <td><span class="red">{pollutant_values["CO"]}</span> ppm</td>
+                </tr>
+            </table>
+            """,
+            unsafe_allow_html=True,
+        )

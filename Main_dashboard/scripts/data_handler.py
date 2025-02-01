@@ -3,23 +3,6 @@ import pandas as pd
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# AQI station coordinates
-# STATION_COORDINATES = {
-#     'Ajusco Medio': {'lat': 19.272222222222, 'lon': -99.207777777778},
-#     'Ajusco': {'lat': 19.204499182, 'lon': -99.254832314},
-#     'Benito Juarez': {'lat': -19.371666666667, 'lon': -99.159166666667},
-#     'Hospital General de México': {'lat': 20.9479, 'lon': -101.4258},
-#     'Merced': {'lat': 19.424722222222, 'lon': -99.119722222222},
-#     'Miguel Hidalgo': {'lat': -19.404, 'lon': -99.202722222222},
-#     'Milpa Alta': {'lat': 19.1928, 'lon': -99.0238},
-#     'Pedregal': {'lat': 19.325277777778, 'lon': -99.204166666667},
-#     'San Agustin': {'lat': 19.533055555556, 'lon': -99.030555555556},
-#     'Santa Fe': {'lat': 19.354431, 'lon': -99.259150},
-#     'Tlalnepantla': {'lat': -19.529166666667, 'lon': -99.204722222222},
-#     'UAM Iztapalapa': {'lat': -19.360833333333, 'lon': -99.07388888888899},
-#     'Xalostoc': {'lat': -19.526111111110996, 'lon': -99.0825}
-# }
-
 STATION_COORDINATES = {
     'Ajusco Medio': {'lat': 19.272222222222, 'lon': -99.207777777778},
     'Ajusco': {'lat': 19.204499182, 'lon': -99.254832314},

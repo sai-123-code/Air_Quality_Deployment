@@ -14,7 +14,6 @@ from pathlib import Path
 from scripts.language_utils import get_text
 from scripts.data_handler import get_current_hour_data, get_all_stations, get_pollutants, get_pollutant_measuremnents, round_to_nearest_hour, get_wind_dir
 from scripts.data_handler import STATION_COORDINATES
-from scripts.components.tags import tagger
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 merged_data_csv = BASE_DIR / 'Dashboard_data' / 'mer_imputed_merged_data.csv'
@@ -89,7 +88,7 @@ def get_24hr_forecast(data, metric='temperature', lang='en'):
         x=alt.X('formatted_time:O',
             sort=None,
             axis=alt.Axis(
-                values=forecast_data['formatted_time'],
+                values=forecast_data['formatted_time'].tolist(),
                 title=get_text('time_of_day', lang),
                 titleColor='black',
                 labelColor='black',
