@@ -33,7 +33,7 @@ st.markdown("""
         font-size: 16px;
     }
     section[data-testid="stSidebar"] {
-        background-color: #262730;
+        background-color: #ecd1a1;
         padding: 1rem;
     }
     section[data-testid="stSidebar"] > div {
@@ -44,7 +44,7 @@ st.markdown("""
         padding: 10px 0;
     }
             
-    .forecast-tempaqi-container {
+    .forecast-aqi-container {
       display: flex;
       flex-direction: column;
       padding: 10px;
@@ -53,7 +53,7 @@ st.markdown("""
       margin: 5px;
     }
     
-    .forecast-hpw-container {
+    .forecast-thw-container {
       display: flex;
       flex-direction: row;
       justify-content: space-between;
@@ -61,10 +61,8 @@ st.markdown("""
       border: 1px solid white; 
       border-radius: 5px;
       margin-block: 1em;
-            
-      background-color: #1F2937;
     }
-    .forecast-hpw-column {
+    .forecast-thw-column {
       display: flex;
       flex-direction: column;
     }

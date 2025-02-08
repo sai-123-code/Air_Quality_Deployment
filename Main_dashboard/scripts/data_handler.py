@@ -69,6 +69,9 @@ def get_station_coordinates(station_name):
     """Get coordinates for a specific station"""
     return STATION_COORDINATES.get(station_name)
 
+def get_some_stations(stations=["Benito Juarez", "Merced", "Pedregal", "UAM Iztapalapa"]):
+    return list(filter(lambda x: x in stations, list(STATION_COORDINATES.keys())))
+
 def get_all_stations():
     """Get list of all station names"""
     return list(STATION_COORDINATES.keys())
@@ -93,12 +96,12 @@ def get_all_hours_data():
     
     return df.to_dict('records')
  
-def get_pollutants(sample_data: pd.DataFrame):
+def get_pollutants(data: pd.DataFrame):
     """Get all possible pollutant metrics to choose from."""
     # NOTE: Update when real-world data is connected
-    exclude_cols = ['date', 'date_w_timestamp', 'hour']
-    exclude_non_pollutants = ['wind_speed', 'humidity', 'pressure']
-    return list(filter(lambda x: x not in [*exclude_cols, *exclude_non_pollutants], sample_data.columns))
+    exclude_cols = ['date', 'date_w_timestamp', 'hour', 'datetime', 'direct_radiation (W/m²)', 'is_festival', 'is_weekend', 'station', 'AirQualityIndex']
+    exclude_non_pollutants = ['wind_speed', 'humidity', 'pressure', 'WSP', 'WDR', 'RH', 'TMP']
+    return list(filter(lambda x: x not in [*exclude_cols, *exclude_non_pollutants], data.columns))
 
 def get_pollutant_measuremnents(pollutant: str):
     pollutant_map = {

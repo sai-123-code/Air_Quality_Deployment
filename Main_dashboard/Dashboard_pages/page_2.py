@@ -9,6 +9,7 @@ from pathlib import Path
 from streamlit_folium import folium_static, st_folium
 from streamlit.components.v1 import html
 from scripts.map_helpers import classical_map, geojson_data, stations_data, forecast_data
+from scripts.prediction import calculate_pollutant_weighted_average, get_highest_aqi
 from scripts.language_utils import get_text
 from scripts.data_handler import get_current_hour_data, load_data
 from scripts.data_handler import STATION_COORDINATES
@@ -16,63 +17,6 @@ from scripts.data_handler import STATION_COORDINATES
 # Get current data of stations and forecast of the stations
 data = stations_data
 forecast = forecast_data
-
-
-def get_highest_aqi(df, station=None, forecast=False):
-    # Ensure datetime is in proper format
-    df['datetime'] = pd.to_datetime(df['datetime'])
-
-    # Check station
-    if station is None and forecast==False:
-        # Get the last row for each station based on datetime
-        last_rows = df.sort_values('datetime').groupby('station').last().reset_index()
-
-        # Find the station with the highest AirQualityIndex
-        highest_aqi_row = last_rows.loc[last_rows['AirQualityIndex'].idxmax()]
-
-        # Extract the station name and AQI value
-        #highest_station = highest_aqi_row['station']
-        highest_aqi = highest_aqi_row['AirQualityIndex']
-
-        return highest_aqi
-
-    # Check station
-    if station is None and forecast:
-        # Let's get the data from that station
-        lowest_fore = df.loc[df["AirQualityIndex"].idxmin()]
-        max_fore = df.loc[df["AirQualityIndex"].idxmax()]
-
-        highest_aqi_fore = max_fore['AirQualityIndex']
-        lowest_aqi_fore = lowest_fore['AirQualityIndex']
-
-        low_max = [lowest_aqi_fore, highest_aqi_fore]
-
-        return low_max
-    
-    elif station in list(df["station"].values) and forecast == False:
-        # Let's get the data from that station
-        filter_station = df[df["station"] == station].iloc[-1:, -2].values[0]
-
-        return filter_station
-    
-    elif station in list(df["station"].values) and forecast:
-        # Let's get the data from that station
-        lowest_fore = df.loc[df[df["station"] == station]["AirQualityIndex"].idxmin()]
-        max_fore = df.loc[df[df["station"] == station]["AirQualityIndex"].idxmax()]
-
-        highest_aqi_fore = max_fore['AirQualityIndex']
-        lowest_aqi_fore = lowest_fore['AirQualityIndex']
-
-        low_max = [lowest_aqi_fore, highest_aqi_fore]
-
-        return low_max
-    
-    elif station not in df.columns:
-        "No data for selected station"
-        return 6
-    
-
-
 
 # Set locale to Spanish (replace 'es_MX' with your system's Spanish locale if needed)
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Use "es_MX.UTF-8" for Mexico-specific locale
@@ -223,69 +167,6 @@ def air_message(index: int, population_type: str, lang: str) -> str:
     }  
     # Return the message
     return air_quality_data[index][lang][population_type]
-
-
-def calculate_weighted_average(df, pollutant, adjustment_factor=1, station=None):
-    """
-    Calculate weighted average concentrations for different pollutants.
-    """ 
-    ADJUSTMENT_FACTORS = {
-        'PM25': 0.694,
-        'PM10': 0.714
-    }
-    
-    if station != None:
-        df = df[df["station"] == station]
-    else:
-        return 0
-    
-    # Handle non-PM/CO cases early
-    if pollutant not in ['PM25', 'PM10', 'CO']:
-        return round(np.mean(df[pollutant][-3:].values), 3)
-    
-    # Get appropriate window size and data
-    window_size = 8 if pollutant == 'CO' else 12
-    concentrations = df[pollutant][-window_size:].values
-    
-    # Handle CO separately
-    if pollutant == 'CO':
-        if len(concentrations) < 8 or np.isnan(concentrations).sum() > len(concentrations) * 0.25:
-            return "No info"
-        return round(np.mean(concentrations), 3)
-    
-    # Process PM data
-    last_three = concentrations[-3:]
-    last_three_null_count = np.isnan(last_three).sum()
-    
-    # Check last three values
-    if last_three_null_count >= 2:
-        return "No info"
-    
-    # Handle single null in last three values
-    if last_three_null_count == 1:
-        concentrations = concentrations.copy()
-        concentrations[-3:] = np.nan_to_num(last_three, nan=0)
-    
-    # Check total null count
-    total_null_count = np.isnan(concentrations).sum()
-    if total_null_count > len(concentrations) * 0.25:
-        return "No info"
-    
-    # Calculate PM average
-    try:
-        Cmax = np.nanmax(concentrations)
-        Cmin = np.nanmin(concentrations)
-        w = max(0.5, 1 - ((Cmax - Cmin) / Cmax))
-        powers = np.arange(len(concentrations)-1, -1, -1)
-        weights = w ** powers
-        
-        weighted_sum = np.sum(concentrations * weights)
-        weight_sum = np.sum(weights)
-    except ValueError:
-        return 0
-
-    return int((weighted_sum / weight_sum) * ADJUSTMENT_FACTORS.get(pollutant, 1))
-
 
 # Define pollutant thresholds as a constant dictionary
 POLLUTANT_THRESHOLDS = {
@@ -448,7 +329,7 @@ def new_home():
         data = stations_data
         
         pollutants = ['PM25', 'PM10', 'SO2', 'O3', 'NO2', 'CO']
-        pollutant_values = {pollutant: calculate_weighted_average(data, pollutant,station=selected_zone) for pollutant in pollutants}
+        pollutant_values = {pollutant: calculate_pollutant_weighted_average(data, pollutant,station=selected_zone) for pollutant in pollutants}
             
 
         # Get the markdown for the table and recommendations
