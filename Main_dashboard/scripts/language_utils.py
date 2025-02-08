@@ -1,8 +1,8 @@
 def get_text(key, language):
     translations = {
         'nav_title': {
-            'en': 'Mexico City Air Quality Forecast',
-            'es': 'Monitor del Índice Aire y Salud de México'
+            'en': '🌎 Mexico City Air and Health Index Forecast',
+            'es': '🌎 Monitor del Índice Aire y Salud de México'
         },
         'select_page': {
             'en': 'Select Page',
@@ -237,7 +237,7 @@ def get_text(key, language):
         },
         'genaral_population': {
             'en': 'General Population:',
-            'es': 'Población General:'
+            'es': 'Población en General:'
         },
         'sensitive_population': {
             'en': 'Sensitive Population:',
@@ -299,6 +299,30 @@ def get_text(key, language):
             'en': 'Mexico City',
             'es': 'Ciudad de México'
         },  
+        'best_time': {
+            'en': 'Best time to be outside',
+            'es': 'El mejor momento para estar al aire libre'
+        },
+        'worst_time': {
+            'en': 'Worst time to be outside',
+            'es': 'El peor momento para estar al aire libre'
+        },
+        'select_time': {
+            'en': 'Select time period',
+            'es': 'Seleccionar el período de tiempo'
+        },
+        'select_group': {
+            'en': 'Select group',
+            'es': 'Seleccionar grupo'
+        },
+        'people_cardiovascular': {
+            'en': 'People with cardiovascular or respiratory diseases and those over 60 years of age',
+            'es': 'Personas con enfermedades cardiovasculares o respiratorias y mayores de 60 años'
+        },
+        'notes': {
+            'en': 'Data is sourced from the monitoring stations in Mexico City and the application is built following the [guidelines from the local authorities](https://dof.gob.mx/nota_detalle.php?codigo=5715154&fecha=25/01/2024#gsc.tab=0). The 24-hour forecast for the Air and Health Index is based on a machine learning model which has 85% accuracy. The Air and Health Index and associated messages are only for information purposes to warn the population. Please consider personal health conditions and stay up-to-date with local authorities and health providers.',
+            'es': 'Los datos provienen de las estaciones de monitoreo en la Ciudad de México, y la aplicación se construyó siguiendo los lineamientos de las autoridades locales. El pronóstico a 24 horas para el Índice de Aire y Salud se basa en un modelo de aprendizaje automático con una precisión del 85%. El Índice de Aire y Salud y los mensajes asociados tienen únicamente fines informativos para alertar a la población. Por favor, considere las condiciones personales de salud y manténgase informado a través de las autoridades locales y los proveedores de salud.'
+        }
     }
     
-    return translations.get(key, {}).get(language, key) 
+    return translations.get(key, {}).get(language, key)
