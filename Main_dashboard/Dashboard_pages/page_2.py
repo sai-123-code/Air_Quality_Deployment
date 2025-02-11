@@ -506,3 +506,6 @@ def new_home():
             """,
             unsafe_allow_html=True,
         )
+
+    # Add explanatory notes
+    st.markdown(get_text('notes', lang))
