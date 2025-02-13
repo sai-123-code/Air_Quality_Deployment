@@ -180,3 +180,5 @@ def home():
     st.altair_chart(day_fig, use_container_width=True)
 
   st.write('*The forecast data listed above is approximately 85% accurate based on multiple tests.*')
+  # Add explanatory notes
+  st.markdown(get_text('notes', lang))

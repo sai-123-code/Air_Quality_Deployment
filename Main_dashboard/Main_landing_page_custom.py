@@ -1,5 +1,5 @@
 import streamlit as st
-from Dashboard_pages import page_1, page_2, forecast, information
+from Dashboard_pages import page_2, forecast, information
 from scripts.language_utils import get_text
 from scripts.data_handler import get_current_hour_data, get_all_stations
 from datetime import datetime
@@ -151,7 +151,12 @@ def main():
 
         # Last update time
         st.markdown("---")
-        st.caption(f"Last update: {st.session_state.last_update.strftime('%Y-%m-%d %H:%M')}")
+        
+        if st.session_state.language == 'en':
+            st.caption(f"Last update: {st.session_state.last_update.strftime('%Y-%m-%d %H:%M')}")
+
+        else:
+            st.caption(f"Última actualización: {st.session_state.last_update.strftime('%Y-%m-%d %H:%M')}")
 
     # Main content
     if page == get_text('main', st.session_state.language):
