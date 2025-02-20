@@ -5,33 +5,72 @@ from pathlib import Path
 from datetime import datetime, timedelta
 from scripts.language_utils import get_text
 from scripts.data_handler import get_current_hour_data, get_some_stations, round_to_nearest_hour
+from scripts.map_helpers import stations_data, forecast_data
+from scripts.prediction import get_highest_aqi
 
+# Get current data of stations and forecast of the stations
+data = stations_data
+forecast = forecast_data
+
+df_guidelines_en = pd.read_csv(Path(__file__).resolve().parent.parent / 'Dashboard_data' / 'Merged Table Guidelines EN.csv')
+df_guidelines_es = pd.read_csv(Path(__file__).resolve().parent.parent / 'Dashboard_data' / 'Merged Table Guidelines ES.csv', encoding='latin1')
+
+def get_index(ind, lang):
+    status = {
+        
+        1: {
+            'en': 'Good',
+            'es': 'Buena'
+        },
+        2: {
+            'en': 'Acceptable',
+            'es': 'Aceptable'
+        },
+        3: {
+            'en': 'Bad',
+            'es': 'Mala'
+        },
+        4: {
+            'en': 'Very Bad',
+            'es': 'Muy Mala'
+        },
+        5: {
+            'en': 'Extremely Bad',
+            'es': 'Extremadamente Mala'
+        },
+        6: {
+            'en': 'No data',
+            'es': 'Sin Datos'
+        }
+        }
+    
+    return status[ind][lang]
 
 # Set locale to Spanish (replace 'es_MX' with your system's Spanish locale if needed)
 locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Use "es_MX.UTF-8" for Mexico-specific locale
 
 # Style the dataframe
 def color_risk(val):
-    if val == 'Low':
+    if val == 'Low' or val == 'Bajo':
         return 'color: #00E400'
-    elif val == 'Moderate':
+    elif val == 'Moderate' or val == 'Moderado':
         return 'color: #FFFF00'
-    elif val == 'High':
+    elif val == 'High' or val == 'Alto':
         return 'color: #FF7E00'
-    elif val == 'Very High':
+    elif val == 'Very High' or val == 'Muy Alto':
         return 'color: #FF0000'
     else:
         return 'color: #8F3F97'
 
 # Style the dataframe
 def color_air_quality(val):
-    if val == 'Good':
+    if val == 'Good' or val == 'Buena':
         return 'color: #00E400'
-    elif val == 'Acceptable':
+    elif val == 'Acceptable' or val == 'Aceptable':
         return 'color: #FFFF00'
-    elif val == 'Bad':
+    elif val == 'Bad' or val == 'Mala':
         return 'color: #FF7E00'
-    elif val == 'Very bad':
+    elif val == 'Very bad' or val == 'Muy Mala':
         return 'color: #FF0000'
     else:
         return 'color: #8F3F97'
@@ -76,33 +115,9 @@ def information_page():
                     "BJU": "Benito Juarez",
                     "MER": "Merced"}
 
-    # Now let's extract the info from the xlsx files
-
-    # Path to the data
-    BASE_DIR = Path(__file__).resolve().parent.parent
-
-    stations_data = pd.DataFrame()
-
-    # Load the data
-    for i in list(list_of_stations.keys()):
-        df_pollutants = pd.read_excel(BASE_DIR / 'Dashboard_data' / 'current_data' / f'{i}_merged_imputed.xlsx')
-        if 'index' in df_pollutants.columns:
-            df_pollutants = df_pollutants.drop('index', axis=1)
-        df_pollutants['station'] = list_of_stations[i]
-        df_pollutants.columns = ['datetime', 'direct_radiation (W/m²)',	'PM25', 'PM10',	'SO2', 'O3', 'NO2',	'CO', 'RH',	'TMP',	'WDR',	'WSP',	'is_festival',	'is_weekend',	'AirQualityIndex', 'station']
-        stations_data = pd.concat([stations_data, df_pollutants], ignore_index=True)
-
-    forecast_data = pd.DataFrame()
-
-    # Load the data
-    for i in list(list_of_stations.keys()):
-        df_pollutants_f = pd.read_excel(BASE_DIR / 'Dashboard_data' / 'forecast_data' / f'{i}_forecast.xlsx')
-        if 'index' in df_pollutants_f.columns:
-            df_pollutants_f = df_pollutants_f.drop('index', axis=1)
-        df_pollutants_f['station'] = list_of_stations[i]
-        df_pollutants_f.columns = ['datetime', 'direct_radiation (W/m²)',	'PM25', 'PM10',	'SO2', 'O3', 'NO2',	'CO', 'RH',	'TMP',	'WDR',	'WSP',	'is_festival',	'is_weekend',	'AirQualityIndex', 'station']
-        forecast_data = pd.concat([forecast_data, df_pollutants_f], ignore_index=True)
-
+    # get AQI ranges
+    forecast_index = get_highest_aqi(forecast, selected_station, forecast=True)
+    
     # Page title and description
     st.title(get_text('information', lang))
     
@@ -112,12 +127,12 @@ def information_page():
     with col1:
         st.info(f"🌟 {get_text('best_time', lang)}\n\n"
                 "**8:00 - 11:00**\n\n"
-                f"{get_text('current_forecast', lang)}: Good")
+                f"{get_text('current_forecast', lang)}: {get_index(forecast_index[0], lang)}")
     
     with col2:
         st.info(f"⚠️ {get_text('worst_time', lang)}\n\n"
                 "**14:00 - 17:00**\n\n"
-                f"{get_text('current_forecast', lang)}: Bad")
+                f"{get_text('current_forecast', lang)}: {get_index(forecast_index[1], lang)}")
     
     # Create two columns for user selection of time and group
     col1, col2 = st.columns(2)
@@ -131,43 +146,70 @@ def information_page():
         st.write(get_text('selected', lang), option_group)
     
     # Create the main recommendations table
-    data = {
-        'Time': ['6:00 - 7:00', '7:00 - 8:00', '8:00 - 9:00'],
-        'Air Quality': ['Good', 'Bad', 'Bad'],
-        'Risk Level': ['Low', 'High', 'High'],
-        'Description of risk': ['The health risk is minimal or non-existent.', 'It is unlikely that health will be affected.', 'It is unlikely that health will be affected.'],
-        'Messages': [
-            'Enjoy outdoor activities',
-            'Outdoor activities are possible. If you have symptoms such as coughing or shortness of breath, take more breaks and do less vigorous activities. Stay informed about the evolution of air quality.',
-            'Outdoor activities are possible. If you have symptoms such as coughing or shortness of breath, take more breaks and do less vigorous activities. Stay informed about the evolution of air quality.'
-        ]
-    }
-    
-    df = pd.DataFrame(data)
+    st.markdown(f"### {get_text('information_based_on_selection', lang)}")
 
-    # Apply styling
-    styled_df = df.style.applymap(color_risk, subset=['Risk Level']).applymap(color_air_quality, subset=['Air Quality'])
-    
-    # Display the table with custom CSS
-    st.markdown("""
-        <style>
-        .stDataFrame {
-            font-size: 16px;
-        }
-        .stDataFrame td {
-            padding: 15px !important;
-        }
-        .stDataFrame th {
-            background-color: #f0f2f6;
-            font-weight: bold;
-        }
-        </style>
-    """, unsafe_allow_html=True)
-    
-    st.table(styled_df)
+    # Filter the data according to the selected station and time
+    filtered_data = forecast_data[(forecast_data['station'] == selected_station) & (forecast_data['datetime'].dt.hour >= 6) & (forecast_data['datetime'].dt.hour < 9)]
+    filtered_data = filtered_data[['datetime', 'AirQualityIndex']]
+
+    # Merge the filtered data with the guidelines data
+    merged_data_en = pd.merge(filtered_data, df_guidelines_en, left_on='AirQualityIndex', right_on='Index', how='left')
+    merged_data_es = pd.merge(filtered_data, df_guidelines_es, left_on='AirQualityIndex', right_on='Index', how='left')
+
+    # Display the table according to the selected group and language
+    if option_group == get_text('general_population', lang) and lang == 'en':
+        result = merged_data_en[['datetime', 'Air Quality', 'Risk level', 'Description of risk: General population', 'General population']]
+        result.columns = ['Time Period', 'Air Quality', 'Risk level', 'Description of risk', 'Messages']
+        
+        # Apply styling
+        styled_df = result.style.applymap(color_risk, subset=['Risk level']).applymap(color_air_quality, subset=['Air Quality'])
+        st.table(styled_df)
+
+    if option_group == get_text('children_and_pregnant', lang) and lang == 'en':
+        result = merged_data_en[['datetime', 'Air Quality', 'Risk level', 'Description of risk: Sensitive Population', 'Children under 12 years old and pregnant people']]
+        result.columns = ['Time Period', 'Air Quality', 'Risk level', 'Description of risk', 'Messages']
+        
+        # Apply styling
+        styled_df = result.style.applymap(color_risk, subset=['Risk level']).applymap(color_air_quality, subset=['Air Quality'])
+        st.table(styled_df)
+
+    if option_group == get_text('people_cardiovascular', lang) and lang == 'en':
+        result = merged_data_en[['datetime', 'Air Quality', 'Risk level', 'Description of risk: Sensitive Population', 'People with cardiovascular or respiratory diseases and those over 60 years of age']]
+        result.columns = ['Time Period', 'Air Quality', 'Risk level', 'Description of risk', 'Messages']
+        
+        # Apply styling
+        styled_df = result.style.applymap(color_risk, subset=['Risk level']).applymap(color_air_quality, subset=['Air Quality'])
+        st.table(styled_df)
+
+    if option_group == get_text('general_population', lang) and lang == 'es':
+        result_es = merged_data_es[['datetime', 'Air Quality', 'Risk level', 'Description of risk: General population', 'General population']]
+        result_es.columns = ['Hora', 'Calidad del aire', 'Nivel de riesgo', 'Descripción del riesgo', 'Mensajes']
+        
+        # Apply styling
+        styled_df_es = result_es.style.applymap(color_risk, subset=['Nivel de riesgo']).applymap(color_air_quality, subset=['Calidad del aire'])
+        st.table(styled_df_es)
+
+    if option_group == get_text('children_and_pregnant', lang) and lang == 'es':
+        result_es = merged_data_es[['datetime', 'Air Quality', 'Risk level', 'Description of risk: Sensitive Population', 'Children under 12 years old and pregnant people']]
+        result_es.columns = ['Hora', 'Calidad del aire', 'Nivel de riesgo', 'Descripción del riesgo', 'Mensajes']
+        
+        # Apply styling
+        styled_df_es = result_es.style.applymap(color_risk, subset=['Nivel de riesgo']).applymap(color_air_quality, subset=['Calidad del aire'])
+        st.table(styled_df_es)
+
+    if option_group == get_text('people_cardiovascular', lang) and lang == 'es':
+        result_es = merged_data_es[['datetime', 'Air Quality', 'Risk level', 'Description of risk: Sensitive Population', 'People with cardiovascular or respiratory diseases and those over 60 years of age']]
+        result_es.columns = ['Hora', 'Calidad del aire', 'Nivel de riesgo', 'Descripción del riesgo', 'Mensajes']
+        
+        # Apply styling
+        styled_df_es = result_es.style.applymap(color_risk, subset=['Nivel de riesgo']).applymap(color_air_quality, subset=['Calidad del aire'])
+        st.table(styled_df_es)
+
     
     # Add explanatory notes
     st.markdown(get_text('notes', lang))
+
+
 
 if __name__ == "__main__":
     st.set_page_config(
