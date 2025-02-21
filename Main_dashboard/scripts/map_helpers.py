@@ -46,7 +46,6 @@ list_of_stations = {"PED": "Pedregal",
 # Path to the data
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 stations_data = pd.DataFrame()
 
 # Load the data
