@@ -69,6 +69,12 @@ st.markdown("""
     .hpw-header {
       color: #9BA2AE;
     }
+    /* Custom CSS to make the caption text black */
+    .stCaption {
+        color: black !important;
+        font-size: 14px;
+    }
+    </style>
     </style>
 """, unsafe_allow_html=True)
 
@@ -151,13 +157,24 @@ def main():
 
         # Last update time
         st.markdown("---")
-        
+
+        # if st.session_state.language == 'en':
+        #     st.caption(f"Last update: {st.session_state.last_update.strftime('%Y-%m-%d %H:%M')}")
+
+        # else:
+        #     st.caption(f"Última actualización: {st.session_state.last_update.strftime('%Y-%m-%d %H:%M')}")
+                
         if st.session_state.language == 'en':
-            st.caption(f"Last update: {st.session_state.last_update.strftime('%Y-%m-%d %H:%M')}")
-
+            st.markdown(
+                f'<div class="stCaption">Last update: {st.session_state.last_update.strftime("%Y-%m-%d %H:%M")}</div>',
+                unsafe_allow_html=True
+            )
         else:
-            st.caption(f"Última actualización: {st.session_state.last_update.strftime('%Y-%m-%d %H:%M')}")
-
+            st.markdown(
+                f'<div class="stCaption">Última actualización: {st.session_state.last_update.strftime("%Y-%m-%d %H:%M")}</div>',
+                unsafe_allow_html=True
+            )
+        
     # Main content
     if page == get_text('main', st.session_state.language):
         page_2.new_home()

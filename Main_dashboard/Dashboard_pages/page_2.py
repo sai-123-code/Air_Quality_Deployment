@@ -23,18 +23,32 @@ locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Use "es_MX.UTF-8" for Mexico-
 temperature = int(data["TMP"][-1:].values[0])  # Replace with dynamic temperature value
 
 # Function to get formatted date and time in a specific language
+# def get_date_time(lang):
+#     if lang == "en":
+#         locale.setlocale(locale.LC_TIME, "en_US.UTF-8")  # Set locale to English
+#     elif lang == "es":
+#         locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Set locale to Spanish
+#     else:
+#         raise ValueError("Unsupported language. Please choose 'English' or 'Spanish'.")
+
+#     current_date = datetime.now().strftime("%A %d de %B de %Y")
+#     formatted_date = current_date.capitalize()
+#     current_time = datetime.now().strftime("%H:%M")
+#     return formatted_date, current_time
+
 def get_date_time(lang):
     if lang == "en":
         locale.setlocale(locale.LC_TIME, "en_US.UTF-8")  # Set locale to English
+        date_format = "%A, %B %d, %Y"
     elif lang == "es":
         locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Set locale to Spanish
+        date_format = "%A %d de %B de %Y"
     else:
-        raise ValueError("Unsupported language. Please choose 'English' or 'Spanish'.")
+        raise ValueError("Unsupported language. Please choose 'en' or 'es'.")
 
-    current_date = datetime.now().strftime("%A %d de %B de %Y")
-    formatted_date = current_date.capitalize()
+    current_date = datetime.now().strftime(date_format).capitalize()
     current_time = datetime.now().strftime("%H:%M")
-    return formatted_date, current_time
+    return current_date, current_time
 
 # Let's create a function to pick the color for the index
 def get_color(aqi):

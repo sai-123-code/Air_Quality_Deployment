@@ -1,8 +1,8 @@
 def get_text(key, language):
     translations = {
         'nav_title': {
-            'en': '🌎 Mexico City Air and Health Index Forecast',
-            'es': '🌎 Monitor del Índice Aire y Salud de México'
+            'en': 'Mexico City Air and Health Index Forecast',
+            'es': 'Monitor del Índice Aire y Salud de México'
         },
         'select_page': {
             'en': 'Select Page',
