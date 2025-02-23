@@ -117,6 +117,9 @@ def information_page():
 
     # get AQI ranges
     forecast_index = get_highest_aqi(forecast, selected_station, forecast=True)
+
+    # Get the time of the indexes
+    forecast_time_index = get_highest_aqi(forecast, selected_station, forecast=True, output='time')
     
     # Page title and description
     st.title(get_text('information', lang))
@@ -126,19 +129,31 @@ def information_page():
     
     with col1:
         st.info(f"🌟 {get_text('best_time', lang)}\n\n"
-                "**8:00 - 11:00**\n\n"
+                f"{forecast_time_index[0].strftime('%H:%M')} - {(forecast_time_index[0] + timedelta(hours=1)).strftime('%H:%M')}\n\n" # Checking the best time
                 f"{get_text('current_forecast', lang)}: {get_index(forecast_index[0], lang)}")
     
     with col2:
         st.info(f"⚠️ {get_text('worst_time', lang)}\n\n"
-                "**14:00 - 17:00**\n\n"
+                f"{forecast_time_index[1].strftime('%H:%M')} - {(forecast_time_index[1] + timedelta(hours=1)).strftime('%H:%M')}\n\n" # Checking the worst time
                 f"{get_text('current_forecast', lang)}: {get_index(forecast_index[1], lang)}")
     
     # Create two columns for user selection of time and group
     col1, col2 = st.columns(2)
     
     with col1:
-        option_time = st.selectbox(get_text('select_time', lang), ("06:00 - 09:00", "09:00 - 12:00", "12:00 - 15:00", "15:00 - 18:00", "18:00 - 21:00", "21:00 - 00:00", "00:00 - 03:00", "03:00 - 06:00"))
+        # Get the current time of the forecast data
+        forecast_current_time = forecast.loc[forecast['station'] == selected_station, 'datetime'].min()
+
+        # Create a list of time slots with a 3-hour increment
+        time_slots = []
+        
+        # Generate time slots of 3 hours, looping through the hours until 24:00
+        for i in range(0, 24, 3):  # 0 to 21 with a step of 3
+            start_time = (forecast_current_time + timedelta(hours=i)).strftime('%H:%M')
+            end_time = (forecast_current_time + timedelta(hours=i+3)).strftime('%H:%M')
+            time_slots.append(f"{start_time} - {end_time}")
+
+        option_time = st.selectbox(get_text('select_time', lang), time_slots)
         st.write(get_text('selected', lang), option_time)
     
     with col2:
@@ -148,8 +163,13 @@ def information_page():
     # Create the main recommendations table
     st.markdown(f"### {get_text('information_based_on_selection', lang)}")
 
+    # Parse the selected time slot into start and end hours
+    start_time_str, end_time_str = option_time.split(" - ")
+    start_hour = datetime.strptime(start_time_str, "%H:%M").hour
+    end_hour = datetime.strptime(end_time_str, "%H:%M").hour
+
     # Filter the data according to the selected station and time
-    filtered_data = forecast_data[(forecast_data['station'] == selected_station) & (forecast_data['datetime'].dt.hour >= 6) & (forecast_data['datetime'].dt.hour < 9)]
+    filtered_data = forecast_data[(forecast_data['station'] == selected_station) & (forecast_data['datetime'].dt.hour >= start_hour) & (forecast_data['datetime'].dt.hour < end_hour)]
     filtered_data = filtered_data[['datetime', 'AirQualityIndex']]
 
     # Merge the filtered data with the guidelines data
@@ -162,7 +182,7 @@ def information_page():
         result.columns = ['Time Period', 'Air Quality', 'Risk level', 'Description of risk', 'Messages']
         
         # Apply styling
-        styled_df = result.style.applymap(color_risk, subset=['Risk level']).applymap(color_air_quality, subset=['Air Quality'])
+        styled_df = result.style.map(color_risk, subset=['Risk level']).applymap(color_air_quality, subset=['Air Quality'])
         st.table(styled_df)
 
     if option_group == get_text('children_and_pregnant', lang) and lang == 'en':

@@ -123,7 +123,7 @@ def calculate_pollutant_weighted_average(df: pd.DataFrame, pollutant: str, adjus
 
   return int((weighted_sum / weight_sum) * ADJUSTMENT_FACTORS.get(pollutant, 1))
 
-def get_highest_aqi(df, station=None, forecast=False):
+def get_highest_aqi(df, station=None, forecast=False, output=None):
   # Ensure datetime is in proper format
   df['datetime'] = pd.to_datetime(df['datetime'])
 
@@ -139,7 +139,10 @@ def get_highest_aqi(df, station=None, forecast=False):
       #highest_station = highest_aqi_row['station']
       highest_aqi = highest_aqi_row['AirQualityIndex']
 
-      return highest_aqi
+      if output is None:
+        return highest_aqi
+      elif output == 'time':
+         return highest_aqi_row['datetime']
 
   # Check station
   if station is None and forecast:
@@ -152,7 +155,10 @@ def get_highest_aqi(df, station=None, forecast=False):
 
       low_max = [lowest_aqi_fore, highest_aqi_fore]
 
-      return low_max
+      if output is None:
+        return low_max
+      elif output == 'time':
+        return [max_fore['datetime'], lowest_fore['datetime']]
   
   elif station in list(df["station"].values) and forecast == False:
       # Let's get the data from that station
@@ -170,7 +176,10 @@ def get_highest_aqi(df, station=None, forecast=False):
 
       low_max = [lowest_aqi_fore, highest_aqi_fore]
 
-      return low_max
+      if output is None:
+        return low_max
+      elif output == 'time':
+        return [max_fore['datetime'], lowest_fore['datetime']]
   
   elif station not in df.columns:
       "No data for selected station"
