@@ -47,7 +47,7 @@ def get_index(ind, lang):
     return status[ind][lang]
 
 # Set locale to Spanish (replace 'es_MX' with your system's Spanish locale if needed)
-locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Use "es_MX.UTF-8" for Mexico-specific locale
+#locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Use "es_MX.UTF-8" for Mexico-specific locale
 
 # Style the dataframe
 def color_risk(val):
