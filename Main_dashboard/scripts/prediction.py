@@ -1,6 +1,30 @@
 import pandas as pd
 import numpy as np
+from pathlib import Path
 from datetime import datetime, timedelta
+
+# other libraries
+import openmeteo_requests
+import requests_cache
+import pandas as pd
+from retry_requests import retry
+import numpy as np
+import pickle
+from datetime import datetime, timedelta
+import lightgbm as lgb
+
+# Log handling
+lgb.basic._log_info = lambda *args, **kwargs: None
+
+# Handle warnings
+import warnings
+warnings.filterwarnings("ignore")
+
+
+
+
+
+
 
 ADJUSTMENT_FACTORS = {
   'PM25': 0.694,
@@ -184,3 +208,257 @@ def get_highest_aqi(df, station=None, forecast=False, output=None):
   elif station not in df.columns:
       "No data for selected station"
       return 6
+  
+
+# Jesus' prediction function to generate forecast excel files
+
+
+# Let's get the forecast of the weather data
+# We are going to use the Open-Meteo API to get them
+def get_weather_data(start_date, end_date):
+	# Setup the Open-Meteo API client with cache and retry on error
+	cache_session = requests_cache.CachedSession('.cache', expire_after = -1)
+	retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
+	openmeteo = openmeteo_requests.Client(session = retry_session)
+
+	url = "https://archive-api.open-meteo.com/v1/archive"
+	params = {
+		"latitude": 19.4326, # Mexico City latitude
+		"longitude": 99.1332, # Mexico City longitude
+		"start_date": start_date,
+		"end_date": end_date,
+		"hourly": ["temperature_2m", "relative_humidity_2m", "wind_speed_10m", "wind_direction_10m", "direct_radiation"] # Variables to retrieve and used in training
+	}
+	responses = openmeteo.weather_api(url, params=params)
+	response = responses[0]
+
+	# Process hourly data
+	hourly = response.Hourly()
+	hourly_temperature_2m = hourly.Variables(0).ValuesAsNumpy()
+	hourly_relative_humidity_2m = hourly.Variables(1).ValuesAsNumpy()
+	hourly_wind_speed_10m = hourly.Variables(2).ValuesAsNumpy()
+	hourly_wind_direction_10m = hourly.Variables(3).ValuesAsNumpy()
+	hourly_direct_radiation = hourly.Variables(4).ValuesAsNumpy()
+
+	hourly_data = {"date": pd.date_range(
+		start = pd.to_datetime(hourly.Time(), unit = "s", utc = True),
+		end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True),
+		freq = pd.Timedelta(seconds = hourly.Interval()),
+		inclusive = "left"
+	)}
+
+	hourly_data["direct_radiation"] = hourly_direct_radiation
+	hourly_data["relative_humidity_2m"] = hourly_relative_humidity_2m
+	hourly_data["temperature_2m"] = hourly_temperature_2m
+	hourly_data["wind_direction_10m"] = hourly_wind_direction_10m
+	hourly_data["wind_speed_10m"] = hourly_wind_speed_10m
+
+	hourly_dataframe = pd.DataFrame(data = hourly_data)
+	hourly_dataframe.columns = ["datetime", "direct_radiation (W/m²)", "RH", "TMP", "WDR", "WSP"]
+	
+	hourly_dataframe["is_festival"] = 1
+	hourly_dataframe["is_weekend"] = 0
+	
+	return hourly_dataframe
+
+
+# Function to have time features in the dataframe
+def preprocess_data(df):
+    df.columns = df.columns.str.replace(' ', '_', regex=False)
+    df['datetime'] = pd.to_datetime(df['datetime'])
+    df['day'] = df['datetime'].dt.day
+    df['month'] = df['datetime'].dt.month
+    df['year'] = df['datetime'].dt.year
+    df['hour'] = df['datetime'].dt.hour
+    df['weekday'] = df['datetime'].dt.weekday
+    return df
+
+
+
+# Function to create future data with lags
+def create_future_data_with_lags(current_data, target_col='PM25_MER', future_steps=24, lags=[1, 2, 3, 24, 48, 72]):
+    # Initialize predictions list
+    predictions = []
+    
+    # Get last known values
+    last_known_values = current_data[target_col].tail(max(lags)).values
+        
+    # Create future dates once
+    last_date = current_data['datetime'].max()
+    future_dates = pd.date_range(
+        start=last_date + pd.Timedelta(hours=1),
+        periods=future_steps,
+        freq='h'
+    )
+    
+    # Pre-create rows for future data
+    future_rows = []
+    
+    # For each future step
+    for step in range(future_steps):
+        # Create a dictionary for the current row
+        current_row = {'datetime': future_dates[step]}
+        
+        # Add lag features
+        for lag in lags:
+            if step < lag:
+                # If we don't have enough predictions yet, use historical data
+                lag_value = last_known_values[-(lag-step)]
+            else:
+                # Use previously generated predictions
+                lag_value = predictions[step-lag]
+            
+            current_row[f'{target_col}_log_lag_{lag}'] = lag_value
+        
+        future_rows.append(current_row)
+
+        # Here you would normally make a prediction and append to predictions list
+        # For now, let's just append a placeholder
+        predictions.append(None)  # Replace this with actual model prediction
+    
+    # Create the future data DataFrame once
+    future_data = pd.DataFrame(future_rows)
+    
+    # Preprocess all data at once
+    future_data = preprocess_data(future_data)
+    
+    return future_data
+
+# Function to calculate the Air and Health Index for each pollutant
+def check_pollution(value, pollutant):
+    categories = {
+        "O3": [(0, 0.058), (0.058, 0.09), (0.09, 0.135), (0.135, 0.175), (0.175, float('inf'))],
+        "NO2": [(0, 0.053), (0.053, 0.106), (0.106, 0.16), (0.16, 0.213), (0.213, float('inf'))],
+        "SO2": [(0, 0.035), (0.035, 0.075), (0.075, 0.185), (0.185, 0.304), (0.304, float('inf'))],
+        "CO": [(0, 5), (5, 9), (9, 12), (12, 16), (16, float('inf'))],
+        "PM10": [(0, 45), (45, 60), (60, 132), (132, 213), (213, float('inf'))],
+        "PM25": [(0, 15), (15, 33), (33, 79), (79, 130), (130, float('inf'))]
+    }
+
+    if pollutant not in categories:
+        return "Unknown pollutant"
+
+    for i, (low, high) in enumerate(categories[pollutant], start=1):
+        if low <= value <= high:
+            return i  # Return category (1-5)
+
+    return "Invalid value"
+
+# Path to the data
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Let's get the list of the pollutants
+pollutants = ['CO', 'NO2', 'O3', 'PM10', 'PM25', 'SO2']
+
+# List of our stations
+stations = ['MER', 'BJU', 'PED', 'UIZ']
+#BASE_DIR / 'Dashboard_data' / 'current_data' / f'{i}_merged_imputed.xlsx'
+# Load all models at once at the beginning
+models = {
+    f"{poll}_{station}": lgb.Booster(model_str=pickle.load(open(BASE_DIR / 'Dashboard_data' / 'models' / f"{poll}_{station}_model_.pkl", "rb"))._handle)
+    for station in stations
+    for poll in pollutants
+}
+
+for station_name in stations:
+    
+    # Let's load our dataset
+    current_data = pd.read_excel(BASE_DIR / 'Dashboard_data' / 'current_data' / f"{station_name}_merged_imputed.xlsx")
+    
+    # We need only 72 hours from our previous dataset
+    last_rows = current_data.tail(72)
+    
+    # Let's get the last date of the current data
+    last_date = last_rows['datetime'].max().strftime('%Y-%m-%d')
+
+    # Get hourly data from weather api
+    hourly_dataframe = get_weather_data(last_date, last_date) # Because it is the same date
+
+    # Let's remove the first from the hourly_data
+    #hourly_dataframe = hourly_dataframe.iloc[1:, :]
+    
+    # Convert to datetime and format
+    hourly_dataframe['datetime'] = pd.to_datetime(hourly_dataframe['datetime']).dt.strftime('%Y-%m-%d %H:%M:%S')
+    
+    for polls in pollutants:
+        # We are going to process the last 72 hours of the current data
+        future_data = create_future_data_with_lags(
+            current_data=last_rows,
+            target_col=f'{polls}_{station_name}',
+            future_steps=24,
+            lags=[1, 2, 3, 24, 48, 72])
+        
+        future_data['datetime'] = pd.to_datetime(future_data['datetime']).dt.strftime('%Y-%m-%d %H:%M:%S')
+
+        # Merge the dataframes
+        df = pd.merge(hourly_dataframe, future_data, on='datetime', how='left').sort_values(by="datetime")
+        
+        # Let's load the model for the pollutants and station
+        model_out = models[f"{polls}_{station_name}"]
+        
+        expected_features = model_out.feature_name()
+
+        #df = merged_data.sort_values(by="datetime")  # Ensure chronological order
+
+        # Create a new column for predictions
+        df[f"{polls}_PRED"] = np.nan
+
+        # remove the datetime column
+        df = df.drop(columns=['datetime'])
+
+        # Let's rename the columns to include MER
+        df = df.rename(columns={'direct_radiation (W/m²)': 'direct_radiation_(W/m²)', 'RH': f'RH_{station_name}', 'TMP': f'TMP_{station_name}', 'WDR': f'WDR_{station_name}', 'WSP': f'WSP_{station_name}'})
+        
+        # I need to use log transformation to my lag features
+        lag_columns = [f'{polls}_{station_name}_log_lag_1', f'{polls}_{station_name}_log_lag_2', f'{polls}_{station_name}_log_lag_3', f'{polls}_{station_name}_log_lag_24', f'{polls}_{station_name}_log_lag_48', f'{polls}_{station_name}_log_lag_72']
+        df[lag_columns] = np.log1p(df[lag_columns])
+        
+        # 1. First, identify all rows that need prediction
+        mask_needs_prediction = pd.isna(df[f"{polls}_PRED"])
+        indices_to_predict = df[mask_needs_prediction].index
+
+
+        # 2. Process these rows in sequence (necessary because of the lag dependencies)
+        for i in indices_to_predict:
+            # Extract features more efficiently (slicing is faster than to_frame().T)
+            input_data = df.loc[i:i, expected_features].astype(float)
+            
+            try:
+                # Make prediction
+                predicted_pm25_log = model_out.predict(input_data)[0]
+            except Exception as e:
+                print(f"Error at index {i}: {e}")
+            
+            
+            predicted_pm25 = np.expm1(predicted_pm25_log)
+            
+            # Store prediction using .at (faster than .loc for single values)
+            df.at[i, f"{polls}_PRED"] = predicted_pm25
+            
+            # Update future lag values more efficiently
+            for lag in range(1, 4):
+                future_idx = i + lag
+                if future_idx < len(df):
+                    df.at[future_idx, f"{polls}_{station_name}_log_lag_{lag}"] = predicted_pm25_log
+
+        hourly_dataframe[f"{polls}_{station_name}"] = df[f"{polls}_PRED"]
+
+    hourly_dataframe["Air_index"] = np.nan
+
+    # Let's iterate through the pollutants columns and check their pollution levels, then storage the max value of each iteration
+    for poll in pollutants:
+        # Let's create one variable that will storage the max value of each iteration
+        max_value = 0
+        for i in range(len(hourly_dataframe)):
+            value = hourly_dataframe.loc[i, f"{poll}_{station_name}"]
+            category = check_pollution(value, poll)
+            if category == "Invalid value":
+                continue
+            if category == "Unknown pollutant":
+                continue
+            if category > max_value:
+                max_value = category
+        hourly_dataframe["Air_index"] = max_value
+
+    # Save the dataframe
+    hourly_dataframe.to_excel(BASE_DIR / 'Dashboard_data' / 'forecast_data' / f"{station_name}_forecast.xlsx", index=False)

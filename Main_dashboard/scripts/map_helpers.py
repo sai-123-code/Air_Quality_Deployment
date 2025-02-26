@@ -61,7 +61,7 @@ forecast_data = pd.DataFrame()
 
 # Load the data
 for i in list(list_of_stations.keys()):
-    df_pollutants_f = pd.read_excel(BASE_DIR / 'Dashboard_data' / 'forecast_data' / f'{i}_forecast.xlsx')
+    df_pollutants_f = pd.read_excel(BASE_DIR / 'Dashboard_data' / 'forecast_data' / f'{i}_fore_new.xlsx')
     if 'index' in df_pollutants_f.columns:
         df_pollutants_f = df_pollutants_f.drop('index', axis=1)
     df_pollutants_f['station'] = list_of_stations[i]
