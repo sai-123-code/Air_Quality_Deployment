@@ -88,19 +88,48 @@ def color_air_quality(val):
 #     formatted_date = current_date.capitalize()
 #     current_time = datetime.now().strftime("%H:%M")
 #     return formatted_date, current_time
+#def get_date_time(lang):
+#    if lang == "en":
+#        locale.setlocale(locale.LC_TIME, "en_US.UTF-8")  # Set locale to English
+#        date_format = "%A, %B %d, %Y"
+#    elif lang == "es":
+#        locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Set locale to Spanish
+#        date_format = "%A %d de %B de %Y"
+#    else:
+#        raise ValueError("Unsupported language. Please choose 'en' or 'es'.")
+
+#    current_date = datetime.now().strftime(date_format).capitalize()
+#    current_time = datetime.now().strftime("%H:%M")
+#    return current_date, current_time
+
+# Because we are using streamlit cloud we skip the code above and use the below:
+# Spanish month and day name mappings
+SPANISH_MONTHS = {
+    "January": "Enero", "February": "Febrero", "March": "Marzo",
+    "April": "Abril", "May": "Mayo", "June": "Junio",
+    "July": "Julio", "August": "Agosto", "September": "Septiembre",
+    "October": "Octubre", "November": "Noviembre", "December": "Diciembre"
+}
+
+SPANISH_DAYS = {
+    "Monday": "Lunes", "Tuesday": "Martes", "Wednesday": "Miércoles",
+    "Thursday": "Jueves", "Friday": "Viernes", "Saturday": "Sábado", "Sunday": "Domingo"
+}
+
 def get_date_time(lang):
+    now = datetime.now()
+    
     if lang == "en":
-        locale.setlocale(locale.LC_TIME, "en_US.UTF-8")  # Set locale to English
-        date_format = "%A, %B %d, %Y"
+        date_format = now.strftime("%A, %B %d, %Y")  # English format
     elif lang == "es":
-        locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Set locale to Spanish
-        date_format = "%A %d de %B de %Y"
+        day_en = now.strftime("%A")
+        month_en = now.strftime("%B")
+        date_format = f"{SPANISH_DAYS[day_en]} {now.strftime('%d')} de {SPANISH_MONTHS[month_en]} de {now.year}"
     else:
         raise ValueError("Unsupported language. Please choose 'en' or 'es'.")
 
-    current_date = datetime.now().strftime(date_format).capitalize()
-    current_time = datetime.now().strftime("%H:%M")
-    return current_date, current_time
+    current_time = now.strftime("%H:%M")
+    return date_format, current_time
 
 def information_page():
     lang = st.session_state.language
