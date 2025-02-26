@@ -20,7 +20,7 @@ forecast = forecast_data
 
 # Set locale to Spanish (replace 'es_MX' with your system's Spanish locale if needed)
 #locale.setlocale(locale.LC_TIME, "es_ES.UTF-8")  # Use "es_MX.UTF-8" for Mexico-specific locale
-#temperature = int(data["TMP"][-1:].values[0])  # Replace with dynamic temperature value
+temperature = int(data["TMP"][-1:].values[0])  # Replace with dynamic temperature value
 
 # Function to get formatted date and time in a specific language
 # def get_date_time(lang):
