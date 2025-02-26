@@ -227,8 +227,8 @@ def get_text(key, language):
         ### Main page
         # Title
         'title_mp': {
-            'en': 'Current Index of Air and Health Map',
-            'es': 'Mapa del Índice Actual de Aire y Salud'
+            'en': 'Current Air and Health Index Map',
+            'es': 'Mapa actual del índice de aire y salud'
         },
         # messages for population
         'air_and_heath_index': {
