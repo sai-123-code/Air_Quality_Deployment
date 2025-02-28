@@ -19,6 +19,13 @@ STATION_COORDINATES = {
     'Xalostoc': {'lat': 19.526111111111, 'lon': -99.0825}
 }
 
+STATION_ACRONYMS = {
+    "Pedregal": "PED",
+    "UAM Iztapalapa": "UIZ",
+    "Benito Juarez": "BJU",
+    "Merced": "MER"
+}
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 dummy_data = BASE_DIR / 'Dashboard_data' / 'AQI_dummy_data.xlsx'
 def load_data(file_path=dummy_data):
