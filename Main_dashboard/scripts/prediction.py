@@ -20,12 +20,6 @@ lgb.basic._log_info = lambda *args, **kwargs: None
 import warnings
 warnings.filterwarnings("ignore")
 
-
-
-
-
-
-
 ADJUSTMENT_FACTORS = {
   'PM25': 0.694,
   'PM10': 0.714
@@ -45,7 +39,12 @@ def naive_formula(df: pd.DataFrame, column: str, station=None) -> int:
   naive_average = data_points[column].mean()
   return naive_average
 
-def naive_formula_24h(df: pd.DataFrame, current_datetime: datetime, column: str, station=None) -> pd.DataFrame:
+def naive_formula_24h(
+  df: pd.DataFrame, 
+  current_datetime: datetime, 
+  column: str, 
+  station=None
+) -> pd.DataFrame:
     """
     Use historical data to return naive predictions for the next 24 hours based on historical averages.
     
@@ -147,6 +146,52 @@ def calculate_pollutant_weighted_average(df: pd.DataFrame, pollutant: str, adjus
 
   return int((weighted_sum / weight_sum) * ADJUSTMENT_FACTORS.get(pollutant, 1))
 
+def calculate_pollutant_time_only(
+    forecast_df: pd.DataFrame, 
+    current_datetime: datetime,
+    column: str, 
+    station_acronym: str = None
+):
+  '''
+    This formula naively extracts the forecasted pollutant using the attached forecast
+    data.
+  '''
+  
+  try:
+    # get the matching time_index
+    # Initialize results
+    predictions = []
+    hours = []
+   
+    # Get predictions for each of the next 24 hours
+    for hour in range(24):
+      target_datetime = current_datetime + pd.Timedelta(hours=hour)
+      
+      # Get historical data points matching the hour and minute
+      historical_points = forecast_df[
+          (forecast_df['datetime'].dt.hour == target_datetime.hour)
+      ]
+      
+      # Calculate average for this hour
+      # NOTE: account for adjustment value?
+      prediction = historical_points[f'{column}_{station_acronym}'].values[0]
+      
+      predictions.append(prediction)
+      hours.append(target_datetime)
+      # hours.append(target_datetime.strftime('%H:00'))
+    
+      # Create results DataFrame
+      results = pd.DataFrame({
+          'datetime': hours,
+          'formatted_time': list(map(lambda x: x.strftime('%H:00'), hours)),
+          f'predicted_{column}': predictions
+      })
+      
+    return results
+  except Exception as e:
+    print(f"Error processing pollutants: {e}")
+  
+    
 def get_highest_aqi(df, station=None, forecast=False, output=None):
   # Ensure datetime is in proper format
   df['datetime'] = pd.to_datetime(df['datetime'])

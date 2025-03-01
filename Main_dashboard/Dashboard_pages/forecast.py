@@ -2,6 +2,7 @@
 '''
   This is the forecast component of the application.
 '''
+from pathlib import Path
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -11,10 +12,24 @@ import altair as alt
 from datetime import datetime, timedelta
 from babel.dates import format_date, format_time, format_datetime
 from pathlib import Path
-from scripts.prediction import naive_formula, naive_formula_24h, get_highest_aqi
+from scripts.prediction import (
+  naive_formula, 
+  naive_formula_24h, 
+  calculate_pollutant_time_only,
+  get_highest_aqi
+)
 from scripts.language_utils import get_text
-from scripts.map_helpers import stations_data, forecast_data
-from scripts.data_handler import get_current_hour_data, get_all_stations, get_some_stations, get_pollutants, get_pollutant_measuremnents, round_to_nearest_hour, get_wind_dir
+from scripts.map_helpers import stations_data, forecast_data, list_of_stations
+from scripts.data_handler import (
+  get_current_hour_data, 
+  get_all_stations, 
+  get_some_stations, 
+  get_pollutants, 
+  get_pollutant_measuremnents, 
+  round_to_nearest_hour, 
+  get_wind_dir,
+  STATION_ACRONYMS
+)
 
 def create_aqi_header(aqi_range, lang):
   """Create a range of lowest and higheset possible AQI based on prediction"""
@@ -52,8 +67,13 @@ def get_24hr_forecast(data, selected_station, metric='temperature', lang='en'):
   
   data = data.copy()
   data = data[data['station'] == selected_station]
-  
-  naive_24h_df = naive_formula_24h(data, current_datetime, metric)
+
+  # get forecast_df
+  BASE_DIR = Path(__file__).resolve().parent.parent
+  acronym = STATION_ACRONYMS.get(selected_station)
+  forecast_dir = BASE_DIR / 'Dashboard_data' / 'forecast_data' / f'{acronym}_forecast.xlsx'
+  selected_forecast_data = pd.read_excel(forecast_dir, parse_dates=['datetime'])
+  naive_24h_df = calculate_pollutant_time_only(selected_forecast_data, current_datetime, metric, acronym)
 
   chart = alt.Chart(naive_24h_df).mark_line(
       color='#2563EB',
